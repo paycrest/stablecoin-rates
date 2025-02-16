@@ -1,12 +1,12 @@
 import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
-import { Provider } from './Provider';
+import { Source } from './Source';
 
-export class Quidax extends Provider<'quidax'> {
+export class Quidax extends Source<'quidax'> {
   private getTickerEndpoint = (ticker: string) =>
     `https://www.quidax.com/api/v1/markets/tickers/${ticker}`;
 
-  providerName = 'quidax' as const;
+  sourceName = 'quidax' as const;
 
   async fetchData(fiat: string) {
     const coins = ['USDT'];
@@ -42,7 +42,7 @@ export class Quidax extends Provider<'quidax'> {
           const coin = ticker.data.market.replace(fiat.toLowerCase(), '');
           const rate = parseFloat(ticker.data.ticker.sell).toFixed(2);
 
-          const price = { fiat, coin, rate, provider: this.providerName };
+          const price = { fiat, coin, rate, source: this.sourceName };
           prices.push(price);
         }
       }
