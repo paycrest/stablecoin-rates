@@ -20,9 +20,9 @@ export class Rate extends Model {
   @Column({ type: DataTypes.STRING, allowNull: false })
   public stablecoin: string;
 
-  @Column({ type: DataTypes.STRING, allowNull: false })
-  public rate: string;
+  @Column({ type: DataTypes.REAL, allowNull: false })
+  public rate: number;
 
   @Column({ type: DataTypes.STRING, allowNull: false })
-  public provider: string;
+  public source: string;
 }

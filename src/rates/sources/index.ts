@@ -1,3 +1,3 @@
-export { Binance } from './Binance';
-export { Quidax } from './Quidax';
-export { Source } from './Source';
+export { Binance } from './binance.source';
+export { Quidax } from './quidax.source';
+export { Source } from './source';

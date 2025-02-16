@@ -1,24 +1,26 @@
 import { Rate } from 'src/database/models';
+import { StableCoin } from '../dto/get-rates.dto';
 
 export abstract class Source<S extends string> {
   abstract sourceName: S;
+  abstract stablecoins: StableCoin[];
 
   abstract fetchData(fiat: string): Promise<boolean>;
 
   async logData(
-    data: { fiat: string; coin: string; rate: string; source: S }[],
+    data: { fiat: string; stablecoin: string; rate: string; source: S }[],
   ) {
     try {
       const records = data.map((record) => ({
         ...record,
-        coin: record.coin.toUpperCase(),
+        stablecoin: record.stablecoin.toUpperCase(),
       }));
       for (const record of records) {
-        const { fiat, coin, source: provider, rate } = record;
+        const { fiat, stablecoin, source, rate } = record;
 
         if (rate) {
           const rateRecord = await Rate.findOne({
-            where: { fiat, coin, provider },
+            where: { fiat, stablecoin, source },
           });
           if (!rateRecord) {
             await Rate.create(record);
@@ -29,7 +31,7 @@ export abstract class Source<S extends string> {
       }
 
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

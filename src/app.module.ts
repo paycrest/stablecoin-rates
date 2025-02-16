@@ -10,7 +10,6 @@ import { RatesModule } from './rates/rates.module';
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
     RatesModule,
-    RatesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

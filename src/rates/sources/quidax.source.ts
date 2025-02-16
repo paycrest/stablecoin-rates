@@ -1,16 +1,19 @@
 import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
-import { Source } from './Source';
+import { StableCoin } from '../dto/get-rates.dto';
+import { Source } from './source';
 
 export class Quidax extends Source<'quidax'> {
   private getTickerEndpoint = (ticker: string) =>
     `https://www.quidax.com/api/v1/markets/tickers/${ticker}`;
 
   sourceName = 'quidax' as const;
+  stablecoins: StableCoin[] = ['USDT'];
 
   async fetchData(fiat: string) {
-    const coins = ['USDT'];
-    const pairs = coins.map((coin) => `${coin}${fiat}`.toLowerCase());
+    const pairs = this.stablecoins.map((stablecoin) =>
+      `${stablecoin}${fiat}`.toLowerCase(),
+    );
 
     const responses = await axios.all(
       pairs.map((pair) => axios.get(this.getTickerEndpoint(pair))),
@@ -39,10 +42,15 @@ export class Quidax extends Source<'quidax'> {
         } = response.data;
 
         if (ticker.status === 'success') {
-          const coin = ticker.data.market.replace(fiat.toLowerCase(), '');
+          const stablecoin = ticker.data.market.replace(fiat.toLowerCase(), '');
           const rate = parseFloat(ticker.data.ticker.sell).toFixed(2);
 
-          const price = { fiat, coin, rate, source: this.sourceName };
+          const price = {
+            fiat,
+            stablecoin,
+            rate: parseFloat(rate),
+            source: this.sourceName,
+          };
           prices.push(price);
         }
       }
