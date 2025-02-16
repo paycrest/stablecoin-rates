@@ -5,7 +5,7 @@ import { AppService } from './app.service';
 export class AppController {
   @Inject(AppService) private readonly appService: AppService;
 
-  @Get()
+  @Get('/health-check')
   healthCheck() {
     return this.appService.healthCheck();
   }
