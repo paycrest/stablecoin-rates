@@ -1,21 +1,23 @@
 import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
-import { Source } from './Source';
+import { calculateMedian } from 'src/common';
+import { StableCoin } from '../dto/get-rates.dto';
+import { Source } from './source';
 
 export class Binance extends Source<'binance'> {
   sourceName = 'binance' as const;
+  stablecoins: StableCoin[] = ['USDT', 'USDC'];
 
   private getEndpoint = () =>
     'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search';
 
   async fetchData(fiat: string) {
-    const coins = ['USDT', 'USDC'];
-    const pairs = coins.map((coin) => ({
+    const pairs = this.stablecoins.map((stablecoin) => ({
       rows: 20,
       page: 1,
       tradeType: 'SELL',
       fiat,
-      asset: coin,
+      asset: stablecoin,
     }));
     const url = this.getEndpoint();
 
@@ -158,28 +160,20 @@ export class Binance extends Source<'binance'> {
 
         if (ticker.success === true) {
           const adPrices = [];
-          let coin = '';
+          let stablecoin = '';
           for (const ad of ticker.data) {
-            coin = ad.adv.asset.toLowerCase();
+            stablecoin = ad.adv.asset.toLowerCase();
             const price = parseFloat(ad.adv.price);
             adPrices.push(price);
           }
 
           // Calculate the median
-          adPrices.sort((a, b) => a - b);
-          let median: number;
-          const len = adPrices.length;
-          const mid = Math.floor(len / 2);
-          if (len % 2 === 0) {
-            median = (adPrices[mid - 1] + adPrices[mid]) / 2;
-          } else {
-            median = adPrices[mid];
-          }
+          const median = calculateMedian(adPrices);
 
           prices.push({
             fiat,
-            coin,
-            rate: median.toFixed(2),
+            stablecoin,
+            rate: parseFloat(median.toFixed(2)),
             source: this.sourceName,
           });
         }
