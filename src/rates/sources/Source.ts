@@ -1,12 +1,12 @@
 import { Rate } from 'src/database/models';
 
-export abstract class Provider<P extends string> {
-  abstract providerName: P;
+export abstract class Source<S extends string> {
+  abstract sourceName: S;
 
   abstract fetchData(fiat: string): Promise<boolean>;
 
   async logData(
-    data: { fiat: string; coin: string; rate: string; provider: P }[],
+    data: { fiat: string; coin: string; rate: string; source: S }[],
   ) {
     try {
       const records = data.map((record) => ({
@@ -14,7 +14,7 @@ export abstract class Provider<P extends string> {
         coin: record.coin.toUpperCase(),
       }));
       for (const record of records) {
-        const { fiat, coin, provider, rate } = record;
+        const { fiat, coin, source: provider, rate } = record;
 
         if (rate) {
           const rateRecord = await Rate.findOne({

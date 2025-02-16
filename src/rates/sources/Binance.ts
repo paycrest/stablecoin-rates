@@ -1,9 +1,9 @@
 import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
-import { Provider } from './Provider';
+import { Source } from './Source';
 
-export class Binance extends Provider<'binance'> {
-  providerName = 'binance' as const;
+export class Binance extends Source<'binance'> {
+  sourceName = 'binance' as const;
 
   private getEndpoint = () =>
     'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search';
@@ -180,7 +180,7 @@ export class Binance extends Provider<'binance'> {
             fiat,
             coin,
             rate: median.toFixed(2),
-            provider: this.providerName,
+            source: this.sourceName,
           });
         }
       }
