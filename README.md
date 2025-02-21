@@ -82,7 +82,7 @@ npm run test:cov
 
 ## Contributing
 
-We welcome contributions to the Paycrest Protocol! To get started, follow these steps:
+We welcome contributions to the stablecoin rates project! To get started, follow these steps:
 
 **Important:** Before you begin contributing, please ensure you've read and understood these important documents:
 
