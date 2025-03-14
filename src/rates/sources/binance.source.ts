@@ -4,15 +4,45 @@ import { calculateMedian } from '../../../src/common';
 import { Fiat, StableCoin } from '../dto/get-rates.dto';
 import { Source } from './source';
 
+/**
+ * Represents the Binance data source.
+ * Extends the generic Source class with the unique source name 'binance'.
+ */
 export class Binance extends Source<'binance'> {
+  /**
+   * Unique name of the source.
+   */
   static sourceName = 'binance' as const;
+
+  /**
+   * Supported stablecoins for Binance.
+   */
   static stablecoins: StableCoin[] = ['USDT', 'USDC'];
+
+  /**
+   * Supported fiat currencies for Binance.
+   */
   static fiats: Fiat[] = ['GHS'];
 
+  /**
+   * Returns the Binance P2P API endpoint URL.
+   *
+   * @returns The endpoint URL.
+   */
   private getEndpoint(): string {
     return 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search';
   }
 
+  /**
+   * Fetches and processes market data from Binance for a given fiat currency.
+   *
+   * This method sends separate POST requests for SELL and BUY orders for each supported stablecoin,
+   * processes the returned data to calculate the median price, and then merges the results into a final
+   * array containing both buy and sell rates. The final data is logged using the inherited logData method.
+   *
+   * @param fiat - The fiat currency to fetch data for (e.g., 'GHS').
+   * @returns A promise that resolves with the logged data containing market prices.
+   */
   async fetchData(fiat: string) {
     const url = this.getEndpoint();
     const headers = {
@@ -20,6 +50,12 @@ export class Binance extends Source<'binance'> {
       'User-Agent': 'insomnia/10.3.1',
     };
 
+    /**
+     * Creates payloads for the specified trade type for each stablecoin.
+     *
+     * @param tradeType - The trade type, either 'SELL' or 'BUY'.
+     * @returns An array of payload objects.
+     */
     const createPayloads = (tradeType: 'SELL' | 'BUY') =>
       Binance.stablecoins.map((stablecoin) => ({
         rows: 20,
@@ -32,6 +68,7 @@ export class Binance extends Source<'binance'> {
     const sellPayloads = createPayloads('SELL');
     const buyPayloads = createPayloads('BUY');
 
+    // Send parallel POST requests for SELL and BUY payloads.
     const sellResponses = await Promise.all(
       sellPayloads.map((data) => axios.post(url, data, { headers })),
     );
@@ -39,6 +76,14 @@ export class Binance extends Source<'binance'> {
       buyPayloads.map((data) => axios.post(url, data, { headers })),
     );
 
+    /**
+     * Processes the array of responses from the Binance API.
+     *
+     * Iterates over the responses to extract the asset and its median price from the advertisements.
+     *
+     * @param responses - An array of responses from axios.
+     * @returns An array of objects containing the fiat, stablecoin, rate, and source.
+     */
     const processResponses = (responses: any[]) => {
       const results: Array<{
         fiat: string;
@@ -76,6 +121,7 @@ export class Binance extends Source<'binance'> {
     const sellPrices = processResponses(sellResponses);
     const buyPrices = processResponses(buyResponses);
 
+    // Merge buy and sell prices for each stablecoin.
     const merged = Binance.stablecoins.reduce(
       (acc, stablecoin) => {
         const buy = buyPrices.find(
