@@ -47,6 +47,7 @@ export class RatesService {
           sources: [item.source],
           buyRate: item.buyRate,
           sellRate: item.sellRate,
+          timestamp: new Date().toISOString(),
         };
       } else {
         const [medianBuy, medianSell] = this.findMedianRate(items);
@@ -58,6 +59,7 @@ export class RatesService {
           sources,
           buyRate: medianBuy,
           sellRate: medianSell,
+          timestamp: new Date().toISOString(),
         };
       }
     });
