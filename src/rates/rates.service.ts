@@ -2,8 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { Op } from 'sequelize';
 import { Rate } from '../../src/database/models';
 
+/**
+ * Service for handling operations related to rate data.
+ *
+ * This service provides methods to fetch rate records from the database,
+ * calculate median rates from multiple records, and group them by fiat-stablecoin pairs.
+ */
 @Injectable()
 export class RatesService {
+  /**
+   * Retrieves rate records for a given stablecoin filtered by a comma-separated list of fiat currencies,
+   * then calculates and returns the median rates.
+   *
+   * @param stablecoin - The stablecoin identifier (e.g., 'USDT').
+   * @param fiats - A comma-separated string of fiat currencies (e.g., 'USD,EUR').
+   * @returns A promise resolving to an array of objects containing median rate data.
+   */
   async getRatesByStablecoinAndFiats(stablecoin: string, fiats: string) {
     const fiatArray = fiats.split(',').map((fiat) => fiat.toUpperCase());
     const rates = await Rate.findAll({
@@ -15,6 +29,12 @@ export class RatesService {
     return this.calculateMedianRates(rates);
   }
 
+  /**
+   * Retrieves all rate records for a given stablecoin, then calculates and returns the median rates.
+   *
+   * @param stablecoin - The stablecoin identifier (e.g., 'USDT').
+   * @returns A promise resolving to an array of objects containing median rate data.
+   */
   async getRatesByStablecoin(stablecoin: string) {
     const rates = await Rate.findAll({
       where: { stablecoin: stablecoin.toUpperCase() },
@@ -22,6 +42,17 @@ export class RatesService {
     return this.calculateMedianRates(rates);
   }
 
+  /**
+   * Calculates median buy and sell rates for each fiat-stablecoin pair from the provided rate records.
+   *
+   * The method groups the records by the combination of fiat and stablecoin.
+   * If a group contains a single record, that record is used directly;
+   * otherwise, the median buy and sell rates are calculated.
+   *
+   * @param data - An array of Rate objects.
+   * @returns An array of objects each containing the trading pair, stablecoin, fiat, sources,
+   *          median buy rate, median sell rate, and a timestamp.
+   */
   private calculateMedianRates(data: Rate[]) {
     const grouped = data.reduce(
       (acc, item) => {
@@ -63,6 +94,12 @@ export class RatesService {
     });
   }
 
+  /**
+   * Finds the median buy and sell rates from an array of Rate objects.
+   *
+   * @param data - An array of Rate objects.
+   * @returns A tuple where the first element is the median buy rate and the second element is the median sell rate.
+   */
   private findMedianRate(data: Rate[]): [number, number] {
     const buyRates = data
       .map((item) => item.buyRate)
@@ -76,6 +113,12 @@ export class RatesService {
     return [this.median(buyRates), this.median(sellRates)];
   }
 
+  /**
+   * Computes the median of an array of numbers.
+   *
+   * @param array - An array of numbers.
+   * @returns The median value.
+   */
   private median(array: number[]): number {
     const mid = Math.floor(array.length / 2);
     return array.length % 2 !== 0
