@@ -1,60 +1,71 @@
 import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
-import { StableCoin } from '../dto/get-rates.dto';
+import { Fiat, StableCoin } from '../dto/get-rates.dto';
 import { Source } from './source';
 
 export class Quidax extends Source<'quidax'> {
-  private getTickerEndpoint = (ticker: string) =>
-    `https://www.quidax.com/api/v1/markets/tickers/${ticker}`;
+  static sourceName = 'quidax' as const;
+  static stablecoins: StableCoin[] = ['USDT'];
+  static fiats: Fiat[] = ['NGN', 'GHS'];
 
-  sourceName = 'quidax' as const;
-  stablecoins: StableCoin[] = ['USDT'];
+  private getTickerEndpoint(ticker: string): string {
+    return `https://www.quidax.com/api/v1/markets/tickers/${ticker}`;
+  }
 
   async fetchData(fiat: string) {
-    const pairs = this.stablecoins.map((stablecoin) =>
+    const pairs = Quidax.stablecoins.map((stablecoin) =>
       `${stablecoin}${fiat}`.toLowerCase(),
     );
 
-    const responses = await axios.all(
+    const responses = await Promise.all(
       pairs.map((pair) => axios.get(this.getTickerEndpoint(pair))),
     );
 
-    const prices = [];
-
-    for (const response of responses) {
-      if (response.status === HttpStatus.OK && response.data) {
-        const ticker: {
-          status: string;
-          message: string;
-          data: {
-            at: number;
-            ticker: {
-              buy: string;
-              sell: string;
-              low: string;
-              high: string;
-              open: string;
-              last: string;
-              vol: string;
+    const prices = responses.reduce(
+      (acc, response) => {
+        if (response.status === HttpStatus.OK && response.data) {
+          const { status, data } = response.data as {
+            status: string;
+            message: string;
+            data: {
+              at: number;
+              ticker: {
+                buy: string;
+                sell: string;
+                low: string;
+                high: string;
+                open: string;
+                last: string;
+                vol: string;
+              };
+              market: string;
             };
-            market: string;
           };
-        } = response.data;
 
-        if (ticker.status === 'success') {
-          const stablecoin = ticker.data.market.replace(fiat.toLowerCase(), '');
-          const rate = parseFloat(ticker.data.ticker.sell).toFixed(2);
+          if (status === 'success') {
+            const stablecoin = data.market.replace(fiat.toLowerCase(), '');
+            const sellRate = Number(parseFloat(data.ticker.sell).toFixed(2));
+            const buyRate = Number(parseFloat(data.ticker.buy).toFixed(2));
 
-          const price = {
-            fiat,
-            stablecoin,
-            rate: parseFloat(rate),
-            source: this.sourceName,
-          };
-          prices.push(price);
+            acc.push({
+              fiat,
+              stablecoin,
+              sellRate,
+              buyRate,
+              source: Quidax.sourceName,
+            });
+          }
         }
-      }
-    }
+        return acc;
+      },
+      [] as Array<{
+        fiat: string;
+        stablecoin: string;
+        sellRate: number;
+        buyRate: number;
+        source: 'quidax';
+      }>,
+    );
 
     return this.logData(prices);
   }

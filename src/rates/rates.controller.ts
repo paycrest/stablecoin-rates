@@ -1,13 +1,20 @@
-import { Body, Controller, Inject, Post } from '@nestjs/common';
+import { Controller, Get, Inject, Param } from '@nestjs/common';
 import { RatesService } from './rates.service';
-import { GetRatesDTO } from './dto';
 
 @Controller('rates')
 export class RatesController {
   @Inject(RatesService) private readonly ratesService: RatesService;
 
-  @Post()
-  getRates(@Body() form: GetRatesDTO) {
-    return this.ratesService.getRates(form);
+  @Get('/:stablecoin/:fiats')
+  getRatesForStablecoinAndFiats(
+    @Param('stablecoin') stablecoin: string,
+    @Param('fiats') fiats: string,
+  ) {
+    return this.ratesService.getRatesByStablecoinAndFiats(stablecoin, fiats);
+  }
+
+  @Get('/:stablecoin')
+  getRatesForStablecoin(@Param('stablecoin') stablecoin: string) {
+    return this.ratesService.getRatesByStablecoin(stablecoin);
   }
 }

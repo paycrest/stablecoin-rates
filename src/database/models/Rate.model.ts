@@ -21,7 +21,10 @@ export class Rate extends Model {
   public stablecoin: string;
 
   @Column({ type: DataTypes.REAL, allowNull: false })
-  public rate: number;
+  public buyRate: number;
+
+  @Column({ type: DataTypes.REAL, allowNull: false })
+  public sellRate: number;
 
   @Column({ type: DataTypes.STRING, allowNull: false })
   public source: string;

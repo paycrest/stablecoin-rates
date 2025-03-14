@@ -1,185 +1,111 @@
 import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
-import { calculateMedian } from 'src/common';
-import { StableCoin } from '../dto/get-rates.dto';
+import { calculateMedian } from '../../../src/common';
+import { Fiat, StableCoin } from '../dto/get-rates.dto';
 import { Source } from './source';
 
 export class Binance extends Source<'binance'> {
-  sourceName = 'binance' as const;
-  stablecoins: StableCoin[] = ['USDT', 'USDC'];
+  static sourceName = 'binance' as const;
+  static stablecoins: StableCoin[] = ['USDT', 'USDC'];
+  static fiats: Fiat[] = ['GHS'];
 
-  private getEndpoint = () =>
-    'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search';
+  private getEndpoint(): string {
+    return 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search';
+  }
 
   async fetchData(fiat: string) {
-    const pairs = this.stablecoins.map((stablecoin) => ({
-      rows: 20,
-      page: 1,
-      tradeType: 'SELL',
-      fiat,
-      asset: stablecoin,
-    }));
     const url = this.getEndpoint();
+    const headers = {
+      'Content-Type': 'application/json',
+      'User-Agent': 'insomnia/10.3.1',
+    };
 
-    const responses = await axios.all(
-      pairs.map((data) =>
-        axios.request({
-          method: 'POST',
-          url,
-          headers: {
-            'Content-Type': 'application/json',
-            'User-Agent': 'insomnia/10.3.1',
-          },
-          data,
-        }),
-      ),
+    const createPayloads = (tradeType: 'SELL' | 'BUY') =>
+      Binance.stablecoins.map((stablecoin) => ({
+        rows: 20,
+        page: 1,
+        tradeType,
+        fiat,
+        asset: stablecoin,
+      }));
+
+    const sellPayloads = createPayloads('SELL');
+    const buyPayloads = createPayloads('BUY');
+
+    const sellResponses = await Promise.all(
+      sellPayloads.map((data) => axios.post(url, data, { headers })),
+    );
+    const buyResponses = await Promise.all(
+      buyPayloads.map((data) => axios.post(url, data, { headers })),
     );
 
-    const prices = [];
-
-    for (const response of responses) {
-      if (response.status === HttpStatus.OK && response.data) {
-        const ticker: {
-          code: string;
-          message?: string;
-          messageDetail?: string;
-          data: {
-            adv: {
-              advNo: string;
-              classify: string;
-              tradeType: string;
-              asset: string;
-              fiatUnit: string;
-              advStatus?: string;
-              priceType?: string;
-              priceFloatingRatio?: number;
-              rateFloatingRatio?: number;
-              currencyRate?: number;
-              price: string;
-              initAmount?: string;
-              surplusAmount: string;
-              tradableQuantity: string;
-              amountAfterEditing?: string;
-              maxSingleTransAmount: string;
-              minSingleTransAmount: string;
-              buyerKycLimit?: number;
-              buyerRegDaysLimit?: number;
-              buyerBtcPositionLimit?: number;
-              remarks?: string;
-              autoReplyMsg?: string;
-              payTimeLimit: number;
-              tradeMethods: {
-                payId?: string;
-                payMethodId: string;
-                payType: string;
-                payAccount?: string;
-                payBank?: string;
-                paySubBank?: string;
-                identifier: string;
-                iconUrlColor?: string;
-                tradeMethodName: string;
-                tradeMethodShortName?: string;
-                tradeMethodBgColor: string;
-              }[];
-              userTradeCountFilterTime?: string;
-              userBuyTradeCountMin?: number;
-              userBuyTradeCountMax?: number;
-              userSellTradeCountMin?: number;
-              userSellTradeCountMax?: number;
-              userAllTradeCountMin?: number;
-              userAllTradeCountMax?: number;
-              userTradeCompleteRateFilterTime?: string;
-              userTradeCompleteCountMin?: number;
-              userTradeCompleteRateMin?: number;
-              userTradeVolumeFilterTime?: string;
-              userTradeType?: string;
-              userTradeVolumeMin?: string;
-              userTradeVolumeMax?: string;
-              userTradeVolumeAsset?: string;
-              createTime?: string;
-              advUpdateTime?: string;
-              fiatVo: any;
-              assetVo: any;
-              advVisibleRet: any;
-              takerAdditionalKycRequired: number;
-              minFiatAmountForAdditionalKyc?: string;
-              inventoryType?: string;
-              offlineReason?: string;
-              assetLogo?: string;
-              assetScale: number;
-              fiatScale: number;
-              priceScale: number;
-              fiatSymbol: string;
-              isTradable: boolean;
-              dynamicMaxSingleTransAmount: string;
-              minSingleTransQuantity: string;
-              maxSingleTransQuantity: string;
-              dynamicMaxSingleTransQuantity: string;
-              commissionRate: string;
-              takerCommissionRate?: string;
-              minTakerFee?: string;
-              tradeMethodCommissionRates: any;
-              launchCountry?: string;
-              abnormalStatusList: any;
-              closeReason?: string;
-              storeInformation: any;
-              allowTradeMerchant: any;
-              adTradeInstructionTagInfoRets: any;
-              isSafePayment: boolean;
-              adAdditionalKycVerifyItems: any;
-              nonTradableRegions: any;
-            };
-            advertiser: {
-              userNo: string;
-              realName?: string;
-              nickName: string;
-              margin?: number;
-              marginUnit?: string;
-              orderCount?: number;
-              monthOrderCount: number;
-              monthFinishRate: number;
-              positiveRate: number;
-              advConfirmTime?: string;
-              email?: string;
-              registrationTime?: string;
-              mobile?: string;
-              userType: string;
-              tagIconUrls: string[];
-              userGrade: number;
-              userIdentity: string;
-              proMerchant?: boolean;
-              badges: string[];
-              vipLevel: number;
-              isBlocked: boolean;
-              activeTimeInSecond: number;
-            };
-          }[];
-          total: number;
-          success: boolean;
-        } = response.data;
-
-        if (ticker.success === true) {
-          const adPrices = [];
+    const processResponses = (responses: any[]) => {
+      const results: Array<{
+        fiat: string;
+        stablecoin: string;
+        rate: number;
+        source: 'binance';
+      }> = [];
+      for (const response of responses) {
+        if (
+          response.status === HttpStatus.OK &&
+          response.data &&
+          response.data.success
+        ) {
+          const adPrices: number[] = [];
           let stablecoin = '';
-          for (const ad of ticker.data) {
+          for (const ad of response.data.data) {
             stablecoin = ad.adv.asset.toLowerCase();
             const price = parseFloat(ad.adv.price);
-            adPrices.push(price);
+            if (!isNaN(price)) adPrices.push(price);
           }
-
-          // Calculate the median
-          const median = calculateMedian(adPrices);
-
-          prices.push({
-            fiat,
-            stablecoin,
-            rate: parseFloat(median.toFixed(2)),
-            source: this.sourceName,
-          });
+          if (adPrices.length) {
+            const median = calculateMedian(adPrices);
+            results.push({
+              fiat,
+              stablecoin,
+              rate: parseFloat(median.toFixed(2)),
+              source: Binance.sourceName,
+            });
+          }
         }
       }
-    }
+      return results;
+    };
 
-    return this.logData(prices);
+    const sellPrices = processResponses(sellResponses);
+    const buyPrices = processResponses(buyResponses);
+
+    const merged = Binance.stablecoins.reduce(
+      (acc, stablecoin) => {
+        const buy = buyPrices.find(
+          (price) =>
+            price.stablecoin.toLowerCase() === stablecoin.toLowerCase(),
+        );
+        const sell = sellPrices.find(
+          (price) =>
+            price.stablecoin.toLowerCase() === stablecoin.toLowerCase(),
+        );
+        if (buy && sell) {
+          acc.push({
+            fiat: buy.fiat,
+            stablecoin: buy.stablecoin,
+            source: buy.source,
+            buyRate: buy.rate,
+            sellRate: sell.rate,
+          });
+        }
+        return acc;
+      },
+      [] as Array<{
+        fiat: string;
+        stablecoin: string;
+        source: 'binance';
+        buyRate: number;
+        sellRate: number;
+      }>,
+    );
+
+    return this.logData(merged);
   }
 }
