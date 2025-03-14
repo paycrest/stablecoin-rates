@@ -28,16 +28,18 @@ async function bootstrap() {
     .setTitle('API Reference')
     .setVersion(version)
     .build();
-
+  const swaggerDocLink = '/api-documentation';
   SwaggerModule.setup(
-    '/api-documentation',
+    swaggerDocLink,
     app,
     SwaggerModule.createDocument(app, doc),
     { customfavIcon: 'http://paycrest.io/favicon.ico' },
   );
 
   await app.listen(config.PORT);
+  const serverUrl = `http://localhost:${config.PORT}`;
 
-  logger.log(`Server running on http://localhost:${config.PORT}`);
+  logger.log(`Server running on ${serverUrl}`);
+  logger.log(`Swagger docs link ${serverUrl}${swaggerDocLink}`);
 }
 bootstrap();

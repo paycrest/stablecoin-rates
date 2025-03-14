@@ -4,7 +4,7 @@ import { IsArray, IsIn, IsNotEmpty } from 'class-validator';
 export type StableCoin = 'USDT' | 'USDC';
 const coin = ['USDT', 'USDC'];
 
-type Fiat = 'KES' | 'NGN' | 'GHS' | 'TZS' | 'UGX' | 'XOF';
+export type Fiat = 'KES' | 'NGN' | 'GHS' | 'TZS' | 'UGX' | 'XOF';
 const fiat = ['KES', 'NGN', 'GHS', 'TZS', 'UGX', 'XOF'];
 
 export class GetRatesDTO {
