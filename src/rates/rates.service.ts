@@ -33,8 +33,6 @@ export class RatesService {
       {} as { [key: string]: Rate[] },
     );
 
-    console.log({ pp: grouped });
-
     return Object.values(grouped).map((items) => {
       const pair = `${items[0].fiat.toLowerCase()}-${items[0].stablecoin.toLowerCase()}`;
       if (items.length === 1) {
