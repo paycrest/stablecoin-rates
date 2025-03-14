@@ -45,8 +45,8 @@ export class RatesService {
           stablecoin: item.stablecoin,
           fiat: item.fiat,
           sources: [item.source],
-          buyRate: item.buyRate,
-          sellRate: item.sellRate,
+          buyRate: Number.parseFloat(item.buyRate.toFixed(2)),
+          sellRate: Number.parseFloat(item.sellRate.toFixed(2)),
           timestamp: new Date().toISOString(),
         };
       } else {
@@ -57,8 +57,8 @@ export class RatesService {
           stablecoin: items[0].stablecoin,
           fiat: items[0].fiat,
           sources,
-          buyRate: medianBuy,
-          sellRate: medianSell,
+          buyRate: Number.parseFloat(medianBuy.toFixed(2)),
+          sellRate: Number.parseFloat(medianSell.toFixed(2)),
           timestamp: new Date().toISOString(),
         };
       }
