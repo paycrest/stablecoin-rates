@@ -19,11 +19,6 @@ export class Quidax extends Source<'quidax'> {
   static stablecoins: StableCoin[] = ['USDT'];
 
   /**
-   * Supported fiat currencies for this source.
-   */
-  static fiats: Fiat[] = ['NGN', 'GHS'];
-
-  /**
    * Constructs the URL endpoint for fetching the ticker data for a given market.
    *
    * @param ticker - The market ticker string (e.g., 'usdtngn').
