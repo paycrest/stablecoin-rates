@@ -20,11 +20,6 @@ export class Binance extends Source<'binance'> {
   static stablecoins: StableCoin[] = ['USDT', 'USDC'];
 
   /**
-   * Supported fiat currencies for Binance.
-   */
-  static fiats: Fiat[] = ['GHS'];
-
-  /**
    * Returns the Binance P2P API endpoint URL.
    *
    * @returns The endpoint URL.

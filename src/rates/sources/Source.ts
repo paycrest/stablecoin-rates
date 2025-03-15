@@ -18,11 +18,6 @@ export abstract class Source<S extends string> {
   static stablecoins: StableCoin[];
 
   /**
-   * List of supported fiat currencies for the source.
-   */
-  static fiats: Fiat[];
-
-  /**
    * Abstract method to fetch data for a given fiat currency.
    *
    * Implementations should fetch market data and return a promise that resolves to a boolean

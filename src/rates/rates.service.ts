@@ -65,12 +65,10 @@ export class RatesService {
     );
 
     return Object.values(grouped).map((items) => {
-      const pair = `${items[0].fiat.toLowerCase()}-${items[0].stablecoin.toLowerCase()}`;
       if (items.length === 1) {
         const item = items[0];
 
         return {
-          pair,
           stablecoin: item.stablecoin,
           fiat: item.fiat,
           sources: [item.source],
@@ -82,7 +80,6 @@ export class RatesService {
         const [medianBuy, medianSell] = this.findMedianRate(items);
         const sources = items.map((item) => item.source);
         return {
-          pair,
           stablecoin: items[0].stablecoin,
           fiat: items[0].fiat,
           sources,
