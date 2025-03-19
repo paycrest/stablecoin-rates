@@ -44,6 +44,17 @@ export class NGN extends Currency {
 }
 
 /**
+ * Represents the Kenyan Shilling (KES) currency.
+ */
+export class KES extends Currency {
+  constructor() {
+    super('KES', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+/**
  * Represents the Ghanaian Cedi (GHS) currency.
  */
 export class GHS extends Currency {

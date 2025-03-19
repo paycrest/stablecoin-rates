@@ -76,8 +76,8 @@ export class Quidax extends Source<'quidax'> {
 
           if (status === 'success') {
             const stablecoin = data.market.replace(fiat.toLowerCase(), '');
-            const sellRate = Number(parseFloat(data.ticker.sell).toFixed(2));
-            const buyRate = Number(parseFloat(data.ticker.buy).toFixed(2));
+            const buyRate = Number(parseFloat(data.ticker.sell).toFixed(2));
+            const sellRate = Number(parseFloat(data.ticker.buy).toFixed(2));
 
             acc.push({
               fiat,
