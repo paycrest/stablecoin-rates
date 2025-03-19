@@ -2,7 +2,7 @@ import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
 import { calculateMedian } from '../../../src/common';
 import { Stablecoin } from '../dto/get-rates.dto';
-import { Source } from './source';
+import { Source } from './sources';
 
 /**
  * Represents the Binance data source.

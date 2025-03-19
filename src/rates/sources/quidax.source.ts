@@ -1,7 +1,7 @@
 import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
 import { Stablecoin } from '../dto/get-rates.dto';
-import { Source } from './source';
+import { Source } from './sources';
 import { logger } from 'src/common';
 
 /**
