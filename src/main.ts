@@ -28,7 +28,7 @@ async function bootstrap() {
     .setTitle('API Reference')
     .setVersion(version)
     .build();
-  const swaggerDocLink = '/api-documentation';
+  const swaggerDocLink = '/docs';
   SwaggerModule.setup(
     swaggerDocLink,
     app,

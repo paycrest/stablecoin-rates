@@ -1,7 +1,8 @@
 import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
-import { Fiat, StableCoin } from '../dto/get-rates.dto';
+import { Stablecoin } from '../dto/get-rates.dto';
 import { Source } from './source';
+import { logger } from 'src/common';
 
 /**
  * Represents the Quidax data source.
@@ -16,7 +17,7 @@ export class Quidax extends Source<'quidax'> {
   /**
    * Supported stablecoins for this source.
    */
-  static stablecoins: StableCoin[] = ['USDT'];
+  static stablecoins: Stablecoin[] = ['USDT'];
 
   /**
    * Constructs the URL endpoint for fetching the ticker data for a given market.
@@ -43,9 +44,14 @@ export class Quidax extends Source<'quidax'> {
       `${stablecoin}${fiat}`.toLowerCase(),
     );
 
-    const responses = await Promise.all(
-      pairs.map((pair) => axios.get(this.getTickerEndpoint(pair))),
-    );
+    let responses: any[] = [];
+    try {
+      responses = await Promise.all(
+        pairs.map((pair) => axios.get(this.getTickerEndpoint(pair))),
+      );
+    } catch (error) {
+      logger.error(error);
+    }
 
     const prices = responses.reduce(
       (acc, response) => {

@@ -1,5 +1,5 @@
 import { Rate } from 'src/database/models';
-import { Fiat, StableCoin } from '../dto/get-rates.dto';
+import { Stablecoin } from '../dto/get-rates.dto';
 
 /**
  * Abstract base class representing a data source for fetching and logging market rates.
@@ -15,7 +15,7 @@ export abstract class Source<S extends string> {
   /**
    * List of supported stablecoins for the source.
    */
-  static stablecoins: StableCoin[];
+  static stablecoins: Stablecoin[];
 
   /**
    * Abstract method to fetch data for a given fiat currency.

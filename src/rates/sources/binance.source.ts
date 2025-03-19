@@ -1,7 +1,7 @@
 import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
 import { calculateMedian } from '../../../src/common';
-import { Fiat, StableCoin } from '../dto/get-rates.dto';
+import { Stablecoin } from '../dto/get-rates.dto';
 import { Source } from './source';
 
 /**
@@ -17,7 +17,7 @@ export class Binance extends Source<'binance'> {
   /**
    * Supported stablecoins for Binance.
    */
-  static stablecoins: StableCoin[] = ['USDT', 'USDC'];
+  static stablecoins: Stablecoin[] = ['USDT', 'USDC'];
 
   /**
    * Returns the Binance P2P API endpoint URL.

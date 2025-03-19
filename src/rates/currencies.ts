@@ -1,6 +1,7 @@
 import { CronExpression } from '@nestjs/schedule';
 import { Cron } from 'croner';
 import { Binance, Quidax, Source } from './sources';
+import { logger } from 'src/common';
 
 type Sources = {
   source: Source<string>;
@@ -21,7 +22,11 @@ class Currency {
        * because of issue: https://github.com/kelektiv/node-cron/issues/805
        */
       new Cron(param.pattern, () => {
-        param.source.fetchData(this._fiat);
+        try {
+          param.source.fetchData(this._fiat);
+        } catch (error) {
+          logger.error(error);
+        }
       });
     }
   }

@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsIn, IsNotEmpty } from 'class-validator';
 
-export type StableCoin = 'USDT' | 'USDC';
+export type Stablecoin = 'USDT' | 'USDC';
 const coin = ['USDT', 'USDC'];
 
 export type Fiat = 'KES' | 'NGN' | 'GHS' | 'TZS' | 'UGX' | 'XOF';
@@ -18,7 +18,7 @@ export class GetRatesDTO {
   @IsArray()
   @IsNotEmpty({ each: true })
   @IsIn(coin, { each: true })
-  coin: StableCoin[];
+  coin: Stablecoin[];
 
   @ApiProperty({
     required: true,
