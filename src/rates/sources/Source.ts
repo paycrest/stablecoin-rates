@@ -1,5 +1,5 @@
 import { Rate } from 'src/database/models';
-import { Stablecoin } from '../dto/get-rates.dto';
+import type { Stablecoin } from '../dto/get-rates.dto';
 
 /**
  * Abstract base class representing a data source for fetching and logging market rates.

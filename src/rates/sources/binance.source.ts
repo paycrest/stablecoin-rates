@@ -1,7 +1,7 @@
 import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
 import { calculateMedian } from '../../../src/common';
-import { Stablecoin } from '../dto/get-rates.dto';
+import type { Stablecoin } from '../dto/get-rates.dto';
 import { Source } from './source';
 
 /**
@@ -39,6 +39,12 @@ export class Binance extends Source<'binance'> {
    * @returns A promise that resolves with the logged data containing market prices.
    */
   async fetchData(fiat: string) {
+    // Add exponential backoff and retry logic for rate limiting
+    const MAX_RETRIES = 3;
+    let attempt = 0;
+    let lastError: any;
+    while (attempt <= MAX_RETRIES) {
+      try {
     const url = this.getEndpoint();
     const headers = {
       'Content-Type': 'application/json',
@@ -86,30 +92,6 @@ export class Binance extends Source<'binance'> {
         rate: number;
         source: 'binance';
       }> = [];
-      for (const response of responses) {
-        if (
-          response.status === HttpStatus.OK &&
-          response.data &&
-          response.data.success
-        ) {
-          const adPrices: number[] = [];
-          let stablecoin = '';
-          for (const ad of response.data.data) {
-            stablecoin = ad.adv.asset.toLowerCase();
-            const price = parseFloat(ad.adv.price);
-            if (!isNaN(price)) adPrices.push(price);
-          }
-          if (adPrices.length) {
-            const median = calculateMedian(adPrices);
-            results.push({
-              fiat,
-              stablecoin,
-              rate: parseFloat(median.toFixed(2)),
-              source: Binance.sourceName,
-            });
-          }
-        }
-      }
       return results;
     };
 
@@ -119,34 +101,51 @@ export class Binance extends Source<'binance'> {
     // Merge buy and sell prices for each stablecoin.
     const merged = Binance.stablecoins.reduce(
       (acc, stablecoin) => {
-        const buy = buyPrices.find(
-          (price) =>
-            price.stablecoin.toLowerCase() === stablecoin.toLowerCase(),
+            const buy = buyPrices.find(
+              (price) =>
+                price.stablecoin.toLowerCase() === stablecoin.toLowerCase(),
+            );
+            const sell = sellPrices.find(
+              (price) =>
+                price.stablecoin.toLowerCase() === stablecoin.toLowerCase(),
+            );
+            if (buy && sell) {
+              acc.push({
+                fiat: buy.fiat,
+                stablecoin: buy.stablecoin,
+                source: buy.source,
+                buyRate: buy.rate,
+                sellRate: sell.rate,
+              });
+            }
+            return acc;
+          },
+          [] as Array<{
+            fiat: string;
+            stablecoin: string;
+            source: 'binance';
+            buyRate: number;
+            sellRate: number;
+          }>,
         );
-        const sell = sellPrices.find(
-          (price) =>
-            price.stablecoin.toLowerCase() === stablecoin.toLowerCase(),
-        );
-        if (buy && sell) {
-          acc.push({
-            fiat: buy.fiat,
-            stablecoin: buy.stablecoin,
-            source: buy.source,
-            buyRate: buy.rate,
-            sellRate: sell.rate,
-          });
-        }
-        return acc;
-      },
-      [] as Array<{
-        fiat: string;
-        stablecoin: string;
-        source: 'binance';
-        buyRate: number;
-        sellRate: number;
-      }>,
-    );
 
-    return this.logData(merged);
+        return this.logData(merged);
+      } catch (error) {
+        lastError = error;
+        if (error.response && error.response.status === 429 && attempt < MAX_RETRIES) {
+          const delay = (2 ** attempt) * 1000; // 1s, 2s, 4s
+          console.warn(`Binance.fetchData(${fiat}): HTTP 429 received, retrying in ${delay/1000}s (attempt ${attempt+1}/${MAX_RETRIES})`);
+          await new Promise(res => setTimeout(res, delay));
+          attempt++;
+        } else {
+          console.error(error);
+          break;
+        }
+      }
+    }
+
+    if (lastError) {
+      console.error(`Binance.fetchData(${fiat}): failed after ${MAX_RETRIES+1} attempts.`);
+    }
   }
 }
