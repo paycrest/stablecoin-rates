@@ -11,29 +11,10 @@ export type Fiat =
   | 'TZS'
   | 'UGX'
   | 'XOF'
-  | 'CZK'
-  | 'HUF'
-  | 'PLN'
-  | 'COP'
-  | 'CLP'
   | 'ZAR'
   | 'SAR';
 
-const fiat = [
-  'KES',
-  'NGN',
-  'GHS',
-  'TZS',
-  'UGX',
-  'XOF',
-  'CZK',
-  'HUF',
-  'PLN',
-  'COP',
-  'CLP',
-  'ZAR',
-  'SAR',
-];
+const fiat = ['KES', 'NGN', 'GHS', 'TZS', 'UGX', 'XOF', 'ZAR', 'SAR'];
 
 export class GetRatesDTO {
   @ApiProperty({
