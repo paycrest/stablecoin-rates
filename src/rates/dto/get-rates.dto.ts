@@ -15,9 +15,7 @@ export type Fiat =
   | 'HUF'
   | 'PLN'
   | 'COP'
-  | 'CLP'
-  | 'ZAR'
-  | 'SAR';
+  | 'CLP';
 
 const fiat = [
   'KES',
@@ -31,8 +29,6 @@ const fiat = [
   'PLN',
   'COP',
   'CLP',
-  'ZAR',
-  'SAR',
 ];
 
 export class GetRatesDTO {

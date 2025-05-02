@@ -146,42 +146,6 @@ export class CLP extends Currency {
 }
 
 /**
- * Represents the South African Rand (ZAR) currency.
- *
- * Alternative P2P Exchange Sources:
- * 1. Luno (https://www.luno.com/api/)
- * 2. VALR (https://www.valr.com/api/)
- * 3. AltcoinTrader (https://www.altcointrader.co.za/api/)
- * 4. LocalBitcoins (https://www.localbitcoins.com/api/)
- * 5. Paxful (https://paxful.com/api)
- */
-export class ZAR extends Currency {
-  constructor() {
-    super('ZAR', [
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
-    ]);
-  }
-}
-
-/**
- * Represents the Saudi Riyal (SAR) currency.
- *
- * Alternative P2P Exchange Sources:
- * 1. Rain (https://www.rain.bh/api/)
- * 2. BitOasis (https://www.bitoasis.net/api/)
- * 3. CoinMENA (https://www.coinmena.com/api/)
- * 4. Paxful (https://paxful.com/api)
- * 5. LocalBitcoins (https://www.localbitcoins.com/api/)
- */
-export class SAR extends Currency {
-  constructor() {
-    super('SAR', [
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
-    ]);
-  }
-}
-
-/**
  * @remarks
  * When adding more fiat currencies, use the ISO 4217 currency code in uppercase as the symbol.
  */
