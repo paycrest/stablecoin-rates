@@ -16,25 +16,19 @@ class Currency {
     this._fiat = fiat;
     this._sources = sources;
 
-    // Senior-level: Clean, clear, and DRY cron scheduling
-    const totalCurrencies = this._sources.length;
-    const baseMinuteOffsets = Array.from({ length: totalCurrencies }, (_, i) => i);
-    const intervals = Array.from({ length: totalCurrencies }, (_, i) => 10 + (i % 9)); // 10-18 min
-
-    this._sources.forEach((param, idx) => {
-      const second = Math.floor(Math.random() * 60);
-      const minuteOffset = baseMinuteOffsets[idx];
-      const interval = intervals[idx];
-      const minutePattern = Array.from({ length: Math.floor(60 / interval) }, (_, i) => (i * interval + minuteOffset) % 60).join(",");
-      const cronPattern = `${second} ${minutePattern} * * * *`;
-      new Cron(cronPattern, () => {
+    for (const param of this._sources) {
+      /**
+       * Using croner instead of @nestjs/schedule
+       * because of issue: https://github.com/kelektiv/node-cron/issues/805
+       */
+      new Cron(param.pattern, () => {
         try {
           param.source.fetchData(this._fiat);
         } catch (error) {
           logger.error(error);
         }
       });
-    });
+    }
   }
 }
 
