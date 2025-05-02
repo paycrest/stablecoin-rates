@@ -4,8 +4,36 @@ import { IsArray, IsIn, IsNotEmpty } from 'class-validator';
 export type Stablecoin = 'USDT' | 'USDC';
 const coin = ['USDT', 'USDC'];
 
-export type Fiat = 'KES' | 'NGN' | 'GHS' | 'TZS' | 'UGX' | 'XOF';
-const fiat = ['KES', 'NGN', 'GHS', 'TZS', 'UGX', 'XOF'];
+export type Fiat =
+  | 'KES'
+  | 'NGN'
+  | 'GHS'
+  | 'TZS'
+  | 'UGX'
+  | 'XOF'
+  | 'CZK'
+  | 'HUF'
+  | 'PLN'
+  | 'COP'
+  | 'CLP'
+  | 'ZAR'
+  | 'SAR';
+
+const fiat = [
+  'KES',
+  'NGN',
+  'GHS',
+  'TZS',
+  'UGX',
+  'XOF',
+  'CZK',
+  'HUF',
+  'PLN',
+  'COP',
+  'CLP',
+  'ZAR',
+  'SAR',
+];
 
 export class GetRatesDTO {
   @ApiProperty({

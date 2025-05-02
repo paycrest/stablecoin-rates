@@ -1,7 +1,7 @@
 import { CronExpression } from '@nestjs/schedule';
 import { Cron } from 'croner';
-import { Binance, Quidax, Source } from './sources';
 import { logger } from 'src/common';
+import { Binance, Quidax, Source } from './sources';
 
 type Sources = {
   source: Source<string>;
@@ -50,6 +50,132 @@ export class GHS extends Currency {
   constructor() {
     super('GHS', [
       { source: new Quidax(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+/**
+ * Represents the Czech Koruna (CZK) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. LocalBitcoins (https://www.localbitcoins.com/api/)
+ * 2. Paxful (https://paxful.com/api)
+ * 3. Kriptomat (https://www.kriptomat.io/api/)
+ * 4. Anycoin Direct (https://www.anycoin.direct/api/)
+ * 5. Coinmate (https://www.coinmate.io/api/)
+ */
+export class CZK extends Currency {
+  constructor() {
+    super('CZK', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+/**
+ * Represents the Hungarian Forint (HUF) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. LocalBitcoins (https://www.localbitcoins.com/api/)
+ * 2. Paxful (https://paxful.com/api)
+ * 3. MrCoin (https://www.mrcoin.com/api/)
+ * 4. BitPanda (https://api.bitpanda.com/)
+ * 5. Coincash.eu (https://www.coincash.eu/api/)
+ */
+export class HUF extends Currency {
+  constructor() {
+    super('HUF', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+/**
+ * Represents the Polish Złoty (PLN) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. BitBay (https://bitbay.net/api/)
+ * 2. Zonda (https://zonda.exchange/api/)
+ * 3. LocalBitcoins (https://www.localbitcoins.com/api/)
+ * 4. Paxful (https://paxful.com/api)
+ * 5. Kriptomat (https://www.kriptomat.io/api/)
+ */
+export class PLN extends Currency {
+  constructor() {
+    super('PLN', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+/**
+ * Represents the Colombian Peso (COP) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. LocalBitcoins (https://www.localbitcoins.com/api/)
+ * 2. Paxful (https://paxful.com/api)
+ * 3. Buda (https://www.buda.com/api/)
+ * 4. Bitso (https://www.bitso.com/api/)
+ * 5. Binance P2P (https://p2p.binance.com/api/)
+ */
+export class COP extends Currency {
+  constructor() {
+    super('COP', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+/**
+ * Represents the Chilean Peso (CLP) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. Buda (https://www.buda.com/api/)
+ * 2. OrionX (https://orionx.io/api/)
+ * 3. CryptoMKT (https://www.cryptomkt.com/api/)
+ * 4. LocalBitcoins (https://www.localbitcoins.com/api/)
+ * 5. Binance P2P (https://p2p.binance.com/api/)
+ */
+export class CLP extends Currency {
+  constructor() {
+    super('CLP', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+/**
+ * Represents the South African Rand (ZAR) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. Luno (https://www.luno.com/api/)
+ * 2. VALR (https://www.valr.com/api/)
+ * 3. AltcoinTrader (https://www.altcointrader.co.za/api/)
+ * 4. LocalBitcoins (https://www.localbitcoins.com/api/)
+ * 5. Paxful (https://paxful.com/api)
+ */
+export class ZAR extends Currency {
+  constructor() {
+    super('ZAR', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+/**
+ * Represents the Saudi Riyal (SAR) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. Rain (https://www.rain.bh/api/)
+ * 2. BitOasis (https://www.bitoasis.net/api/)
+ * 3. CoinMENA (https://www.coinmena.com/api/)
+ * 4. Paxful (https://paxful.com/api)
+ * 5. LocalBitcoins (https://www.localbitcoins.com/api/)
+ */
+export class SAR extends Currency {
+  constructor() {
+    super('SAR', [
       { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
     ]);
   }
