@@ -1,7 +1,7 @@
 import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
 import { calculateMedian } from '../../../src/common';
-import { Stablecoin } from '../dto/get-rates.dto';
+import type { Stablecoin } from '../dto/get-rates.dto';
 import { Source } from './source';
 
 /**
@@ -96,15 +96,15 @@ export class Binance extends Source<'binance'> {
           let stablecoin = '';
           for (const ad of response.data.data) {
             stablecoin = ad.adv.asset.toLowerCase();
-            const price = parseFloat(ad.adv.price);
-            if (!isNaN(price)) adPrices.push(price);
+            const price = Number.parseFloat(ad.adv.price);
+            if (!Number.isNaN(price)) adPrices.push(price);
           }
           if (adPrices.length) {
             const median = calculateMedian(adPrices);
             results.push({
               fiat,
               stablecoin,
-              rate: parseFloat(median.toFixed(2)),
+              rate: Number.parseFloat(median.toFixed(2)),
               source: Binance.sourceName,
             });
           }

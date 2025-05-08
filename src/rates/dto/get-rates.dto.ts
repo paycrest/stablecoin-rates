@@ -5,16 +5,9 @@ export type Stablecoin = 'USDT' | 'USDC';
 const coin = ['USDT', 'USDC'];
 
 export type Fiat =
-  | 'KES'
-  | 'NGN'
-  | 'GHS'
-  | 'TZS'
-  | 'UGX'
-  | 'XOF'
-  | 'ZAR'
-  | 'SAR';
+  'KES' | 'NGN' | 'GHS' | 'TZS' | 'UGX' | 'XOF' | 'MYR' | 'IDR' | 'PKR' | 'INR' | 'THB' | 'VND' | 'PHP' | 'SGD' | 'HKD' | 'MXN' | 'ZAR' | 'SAR';
 
-const fiat = ['KES', 'NGN', 'GHS', 'TZS', 'UGX', 'XOF', 'ZAR', 'SAR'];
+const fiat = ['KES', 'NGN', 'GHS', 'TZS', 'UGX', 'XOF', 'MXN', 'MYR', 'IDR', 'PKR', 'INR', 'THB', 'VND', 'PHP', 'SGD', 'HKD', 'ZAR', 'SAR'];
 
 export class GetRatesDTO {
   @ApiProperty({
