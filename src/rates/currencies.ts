@@ -214,3 +214,24 @@ export class HKD extends Currency {
  * @remarks
  * When adding more fiat currencies, use the ISO 4217 currency code in uppercase as the symbol.
  */
+
+/**
+ * Represents the Mexican Peso (MXN) currency.
+ *
+ * Sources: Binance (P2P)
+ *
+ * Other reliable P2P MXN sources:
+ * - Paxful: https://paxful.com
+ * - AirTM: https://www.airtm.com
+ * - Binance P2P: https://p2p.binance.com (already integrated)
+ * - Bitso: https://bitso.com
+ */
+export class MXN extends Currency {
+  constructor() {
+    super('MXN', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Quidax(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
