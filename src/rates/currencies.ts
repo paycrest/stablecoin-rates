@@ -33,6 +33,11 @@ class Currency {
 }
 
 /**
+ * @remarks
+ * When adding more fiat currencies, use the ISO 4217 currency code in uppercase as the symbol.
+ */
+
+/**
  * Represents the Nigerian Naira (NGN) currency.
  */
 export class NGN extends Currency {
@@ -56,15 +61,33 @@ export class GHS extends Currency {
 }
 
 /**
- * Represents the Malaysian Ringgit (MYR) currency.
+ * Represents the South African Rand (ZAR) currency.
  *
- * Sources: Binance (P2P)
- *
- * Other reliable P2P MYR sources:
- * - Luno: https://www.luno.com
- * - Remitano: https://remitano.com
- * - Binance P2P: https://p2p.binance.com (already integrated)
+ * Alternative P2P Exchange Sources:
+ * 1. Luno (https://www.luno.com/api/)
+ * 2. VALR (https://www.valr.com/api/)
+ * 3. AltcoinTrader (https://www.altcointrader.co.za/api/)
+ * 4. LocalBitcoins (https://www.localbitcoins.com/api/)
+ * 5. Paxful (https://paxful.com/api)
  */
+export class ZAR extends Currency {
+  constructor() {
+    super('ZAR', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+      
+      
+//  * Represents the Malaysian Ringgit (MYR) currency.
+//  *
+//  * Sources: Binance (P2P)
+//  *
+//  * Other reliable P2P MYR sources:
+//  * - Luno: https://www.luno.com
+//  * - Remitano: https://remitano.com
+//  * - Binance P2P: https://p2p.binance.com (already integrated)
+//  */
 export class MYR extends Currency {
   constructor() {
     super('MYR', [
@@ -195,13 +218,30 @@ export class SGD extends Currency {
 }
 
 /**
- * Represents the Hong Kong Dollar (HKD) currency.
+ * Represents the Saudi Riyal (SAR) currency.
  *
- * Sources: Binance (P2P)
- *
- * Other reliable P2P HKD sources:
- * - Binance P2P: https://p2p.binance.com (already integrated)
+ * Alternative P2P Exchange Sources:
+ * 1. Rain (https://www.rain.bh/api/)
+ * 2. BitOasis (https://www.bitoasis.net/api/)
+ * 3. CoinMENA (https://www.coinmena.com/api/)
+ * 4. Paxful (https://paxful.com/api)
+ * 5. LocalBitcoins (https://www.localbitcoins.com/api/)
  */
+export class SAR extends Currency {
+  constructor() {
+    super('SAR', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+      
+//  * Represents the Hong Kong Dollar (HKD) currency.
+//  *
+//  * Sources: Binance (P2P)
+//  *
+//  * Other reliable P2P HKD sources:
+//  * - Binance P2P: https://p2p.binance.com (already integrated)
+//  */
 export class HKD extends Currency {
   constructor() {
     super('HKD', [
@@ -209,11 +249,6 @@ export class HKD extends Currency {
     ]);
   }
 }
-
-/**
- * @remarks
- * When adding more fiat currencies, use the ISO 4217 currency code in uppercase as the symbol.
- */
 
 /**
  * Represents the Mexican Peso (MXN) currency.
