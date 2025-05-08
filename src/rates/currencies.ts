@@ -77,8 +77,7 @@ export class ZAR extends Currency {
     ]);
   }
 }
-      
-      
+
 //  * Represents the Malaysian Ringgit (MYR) currency.
 //  *
 //  * Sources: Binance (P2P)
@@ -236,7 +235,7 @@ export class SAR extends Currency {
     ]);
   }
 }
-      
+
 //  * Represents the Hong Kong Dollar (HKD) currency.
 //  *
 //  * Sources: Binance (P2P)
@@ -271,7 +270,6 @@ export class MXN extends Currency {
     ]);
   }
 }
-
 
 /**
  * Represents the Czech Koruna (CZK) currency.
@@ -362,4 +360,3 @@ export class CLP extends Currency {
     ]);
   }
 }
-
