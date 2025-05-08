@@ -167,6 +167,8 @@ export class THB extends Currency {
 }
 
 /**
+ * @remarks
+ * When adding more fiat currencies, use the ISO 4217 currency code in uppercase as the symbol.
  * Represents the Vietnamese Dong (VND) currency.
  *
  * Sources: Binance (P2P)
@@ -266,6 +268,97 @@ export class MXN extends Currency {
     super('MXN', [
       { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
       { source: new Quidax(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+
+/**
+ * Represents the Czech Koruna (CZK) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. LocalBitcoins (https://www.localbitcoins.com/api/)
+ * 2. Paxful (https://paxful.com/api)
+ * 3. Kriptomat (https://www.kriptomat.io/api/)
+ * 4. Anycoin Direct (https://www.anycoin.direct/api/)
+ * 5. Coinmate (https://www.coinmate.io/api/)
+ */
+export class CZK extends Currency {
+  constructor() {
+    super('CZK', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+/**
+ * Represents the Hungarian Forint (HUF) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. LocalBitcoins (https://www.localbitcoins.com/api/)
+ * 2. Paxful (https://paxful.com/api)
+ * 3. MrCoin (https://www.mrcoin.com/api/)
+ * 4. BitPanda (https://api.bitpanda.com/)
+ * 5. Coincash.eu (https://www.coincash.eu/api/)
+ */
+export class HUF extends Currency {
+  constructor() {
+    super('HUF', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+/**
+ * Represents the Polish Złoty (PLN) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. BitBay (https://bitbay.net/api/)
+ * 2. Zonda (https://zonda.exchange/api/)
+ * 3. LocalBitcoins (https://www.localbitcoins.com/api/)
+ * 4. Paxful (https://paxful.com/api)
+ * 5. Kriptomat (https://www.kriptomat.io/api/)
+ */
+export class PLN extends Currency {
+  constructor() {
+    super('PLN', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+/**
+ * Represents the Colombian Peso (COP) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. LocalBitcoins (https://www.localbitcoins.com/api/)
+ * 2. Paxful (https://paxful.com/api)
+ * 3. Buda (https://www.buda.com/api/)
+ * 4. Bitso (https://www.bitso.com/api/)
+ * 5. Binance P2P (https://p2p.binance.com/api/)
+ */
+export class COP extends Currency {
+  constructor() {
+    super('COP', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+/**
+ * Represents the Chilean Peso (CLP) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. Buda (https://www.buda.com/api/)
+ * 2. OrionX (https://orionx.io/api/)
+ * 3. CryptoMKT (https://www.cryptomkt.com/api/)
+ * 4. LocalBitcoins (https://www.localbitcoins.com/api/)
+ * 5. Binance P2P (https://p2p.binance.com/api/)
+ */
+export class CLP extends Currency {
+  constructor() {
+    super('CLP', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
     ]);
   }
 }
