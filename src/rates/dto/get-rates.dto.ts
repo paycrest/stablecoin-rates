@@ -7,13 +7,14 @@ const coin = ['USDT', 'USDC'];
 export type Fiat = 'KES' | 'NGN' | 'GHS' | 'TZS' | 'UGX' | 'XOF' | 'MYR' | 'IDR' | 'PKR' | 'INR' | 'THB' | 'VND' | 'PHP' | 'SGD' | 'HKD' | 'MXN' | 'ZAR' | 'SAR' | 'CZK' | 'HUF'
   | 'PLN'
   | 'COP'
-  | 'CLP';
+  | 'CLP' | 'TRY' | 'TWD' | 'RSD' | 'XOF' | 'MUR';
 
 const fiat = ['KES', 'NGN', 'GHS', 'TZS', 'UGX', 'XOF', 'MXN', 'MYR', 'IDR', 'PKR', 'INR', 'THB', 'VND', 'PHP', 'SGD', 'HKD', 'ZAR', 'SAR', 'CZK',
   'HUF',
   'PLN',
   'COP',
-  'CLP'];
+  'CLP',
+  'TRY', 'TWD', 'RSD', 'XOF', 'MUR'];
 
 export class GetRatesDTO {
   @ApiProperty({
