@@ -54,7 +54,7 @@ export class NGN extends Currency {
 export class KES extends Currency {
   constructor() {
     super('KES', [
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Binance(), pattern: '15 */5 * * * *' }, // Every 5 minutes at 15 seconds
     ]);
   }
 }
@@ -65,8 +65,8 @@ export class KES extends Currency {
 export class GHS extends Currency {
   constructor() {
     super('GHS', [
-      { source: new Quidax(), pattern: CronExpression.EVERY_5_MINUTES },
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Quidax(), pattern: '30 */5 * * * *' }, // Every 5 minutes at 30 seconds
+      { source: new Binance(), pattern: '45 */5 * * * *' }, // Every 5 minutes at 45 seconds
     ]);
   }
 }
@@ -101,7 +101,7 @@ export class ZAR extends Currency {
 export class MYR extends Currency {
   constructor() {
     super('MYR', [
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Binance(), pattern: '15 */5 * * * *' }, // Every 5 minutes at 15 seconds
     ]);
   }
 }
@@ -120,7 +120,7 @@ export class MYR extends Currency {
 export class IDR extends Currency {
   constructor() {
     super('IDR', [
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Binance(), pattern: '30 */5 * * * *' }, // Every 5 minutes at 30 seconds
     ]);
   }
 }
@@ -137,7 +137,7 @@ export class IDR extends Currency {
 export class PKR extends Currency {
   constructor() {
     super('PKR', [
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Binance(), pattern: '45 */5 * * * *' }, // Every 5 minutes at 45 seconds
     ]);
   }
 }
@@ -171,7 +171,7 @@ export class INR extends Currency {
 export class THB extends Currency {
   constructor() {
     super('THB', [
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Binance(), pattern: '15 */5 * * * *' }, // Every 5 minutes at 15 seconds
     ]);
   }
 }
@@ -190,7 +190,7 @@ export class THB extends Currency {
 export class VND extends Currency {
   constructor() {
     super('VND', [
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Binance(), pattern: '30 */5 * * * *' }, // Every 5 minutes at 30 seconds
     ]);
   }
 }
@@ -207,7 +207,7 @@ export class VND extends Currency {
 export class PHP extends Currency {
   constructor() {
     super('PHP', [
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Binance(), pattern: '45 */5 * * * *' }, // Every 5 minutes at 45 seconds
     ]);
   }
 }
@@ -242,7 +242,7 @@ export class SGD extends Currency {
 export class SAR extends Currency {
   constructor() {
     super('SAR', [
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Binance(), pattern: '15 */5 * * * *' }, // Every 5 minutes at 15 seconds
     ]);
   }
 }
@@ -257,7 +257,7 @@ export class SAR extends Currency {
 export class HKD extends Currency {
   constructor() {
     super('HKD', [
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Binance(), pattern: '30 */5 * * * *' }, // Every 5 minutes at 30 seconds
     ]);
   }
 }
@@ -276,7 +276,7 @@ export class HKD extends Currency {
 export class MXN extends Currency {
   constructor() {
     super('MXN', [
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Binance(), pattern: '45 */5 * * * *' }, // Every 5 minutes at 45 seconds
       { source: new Quidax(), pattern: CronExpression.EVERY_5_MINUTES },
     ]);
   }
@@ -295,7 +295,7 @@ export class MXN extends Currency {
 export class CZK extends Currency {
   constructor() {
     super('CZK', [
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Binance(), pattern: '15 */5 * * * *' }, // Every 5 minutes at 15 seconds
     ]);
   }
 }
@@ -313,7 +313,7 @@ export class CZK extends Currency {
 export class HUF extends Currency {
   constructor() {
     super('HUF', [
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Binance(), pattern: '30 */5 * * * *' }, // Every 5 minutes at 30 seconds
     ]);
   }
 }
@@ -331,7 +331,7 @@ export class HUF extends Currency {
 export class PLN extends Currency {
   constructor() {
     super('PLN', [
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Binance(), pattern: '45 */5 * * * *' }, // Every 5 minutes at 45 seconds
     ]);
   }
 }
@@ -367,7 +367,7 @@ export class COP extends Currency {
 export class CLP extends Currency {
   constructor() {
     super('CLP', [
-      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+      { source: new Binance(), pattern: '15 */5 * * * *' }, // Every 5 minutes at 15 seconds
     ]);
   }
 }
