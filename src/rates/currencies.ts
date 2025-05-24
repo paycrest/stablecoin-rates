@@ -371,3 +371,82 @@ export class CLP extends Currency {
     ]);
   }
 }
+
+/**
+ * Represents the Turkish lira (TRY) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. Paxful (https://paxful.com/api)
+ * 2. OKX P2P (https://www.okx.com/p2p-markets)
+ * 3. LocalBitcoins (https://www.localbitcoins.com/api/)
+ */
+export class TRY extends Currency {
+  constructor() {
+    super('TRY', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+/**
+ * Represents the New Taiwan Dollar (TWD) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. Paxful (https://paxful.com/api)
+ * 2. Remitano (https://remitano.com/api)
+ * 3. Binance P2P (https://p2p.binance.com)
+ */
+export class TWD extends Currency {
+  constructor() {
+    super('TWD', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+/**
+ * Represents the Serbian Dinar (RSD) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. Paxful (https://paxful.com/api)
+ * 2. Kriptomat (https://www.kriptomat.io/api/)
+ */
+export class RSD extends Currency {
+  constructor() {
+    super('RSD', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+/**
+ * Represents the West African CFA Franc (
+ ) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. Yellow Card (https://yellowcard.io)
+ * 2. Paxful (https://paxful.com/api)
+ * 3. Binance P2P (https://p2p.binance.com)
+ */
+export class XOF extends Currency {
+  constructor() {
+    super('XOF', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
+
+/**
+ * Represents the Mauritian Rupee (MUR) currency.
+ *
+ * Alternative P2P Exchange Sources:
+ * 1. Remitano (https://remitano.com/api)
+ * 2. Paxful (https://paxful.com/api)
+ */
+export class MUR extends Currency {
+  constructor() {
+    super('MUR', [
+      { source: new Binance(), pattern: CronExpression.EVERY_5_MINUTES },
+    ]);
+  }
+}
