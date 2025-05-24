@@ -1,8 +1,8 @@
 {
   "name": "stablecoin-rates",
   "version": "0.0.1",
-  "description": "An aggregation service that fetches and compares stablecoin-to-fiat exchange rates from different off-ramp providers",
-  "author": "Claret Nnamocha <devclareo@gmail.com>",
+  "description": "An aggregation service that fetches and compares stablecoin-to-fiat exchange rates from different providers",
+  "author": "Paycrest Dev Community <https://t.me/2298030549/1>",
   "license": "AGPL-3.0",
   "scripts": {
     "build": "nest build",
