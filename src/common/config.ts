@@ -2,17 +2,15 @@ import { plainToInstance, Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
-  IsString,
   validate,
 } from 'class-validator';
 
 class Config {
-  @IsString()
   @IsOptional()
   PORT: string = '8000';
 
-  @IsString()
   @IsOptional()
   DATABASE_DIALECT: 'postgres' | 'mysql' | 'oracle' = 'postgres';
 
@@ -26,7 +24,6 @@ class Config {
   @IsOptional()
   ENABLE_DATABASE_LOGGING: boolean = true;
 
-  @IsString()
   @IsNotEmpty()
   DATABASE_URL: string;
 }
