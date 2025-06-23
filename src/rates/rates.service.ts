@@ -19,7 +19,7 @@ export class RatesService {
    * @returns A promise resolving to an array of objects containing median rate data.
    */
   async getRatesByStablecoinAndFiats(stablecoin: string, fiats: string) {
-    const fiatArray = fiats.split(',').map((fiat) => fiat.toUpperCase());
+    const fiatArray = fiats.split(',').map((fiat) => fiat.toUpperCase().trim());
     const rates = await Rate.findAll({
       where: {
         stablecoin: stablecoin.toUpperCase(),
