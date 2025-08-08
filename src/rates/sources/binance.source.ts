@@ -137,10 +137,25 @@ export class Binance extends Source<'binance'> {
     
     for (const rate of rates) {
       try {
-        await Rate.upsert({
-          id: `${rate.source}-${rate.stablecoin}-${rate.fiat}`,
-          ...rate,
+        // Check if rate already exists, if not create new one (let UUID auto-generate)
+        const existingRate = await Rate.findOne({
+          where: {
+            source: rate.source,
+            stablecoin: rate.stablecoin,
+            fiat: rate.fiat,
+          },
         });
+
+        if (existingRate) {
+          // Update existing rate
+          await existingRate.update({
+            buyRate: rate.buyRate,
+            sellRate: rate.sellRate,
+          });
+        } else {
+          // Create new rate (UUID will auto-generate)
+          await Rate.create(rate);
+        }
       } catch (error) {
         logger.error(`Failed to save rate ${rate.stablecoin}/${rate.fiat}:`, error);
       }

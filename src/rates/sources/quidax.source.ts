@@ -27,7 +27,7 @@ export class Quidax extends Source<'quidax'> {
    * @returns The endpoint URL.
    */
   private getEndpoint(fiat: string): string {
-    return `https://www.quidax.com/api/v1/markets/tickers/usdt${fiat.toLowerCase()}`;
+    return `https://app.quidax.io/api/v1/markets/tickers/usdt${fiat.toLowerCase()}`;
   }
 
   /**
@@ -50,12 +50,12 @@ export class Quidax extends Source<'quidax'> {
               },
             });
 
-            if (response.status === HttpStatus.OK && response.data) {
-              const data = response.data;
+            if (response.status === HttpStatus.OK && response.data && response.data.status === 'success') {
+              const ticker = response.data.data.ticker;
               
               // Extract buy and sell rates from Quidax response
-              const buyRate = parseFloat(data.buy || data.bid);
-              const sellRate = parseFloat(data.sell || data.ask);
+              const buyRate = parseFloat(ticker.buy);
+              const sellRate = parseFloat(ticker.sell);
 
               if (isNaN(buyRate) || isNaN(sellRate)) {
                 logger.warn(`Invalid rates for ${stablecoin}/${fiat} on Quidax`);
@@ -119,10 +119,25 @@ export class Quidax extends Source<'quidax'> {
     
     for (const rate of rates) {
       try {
-        await Rate.upsert({
-          id: `${rate.source}-${rate.stablecoin}-${rate.fiat}`,
-          ...rate,
+        // Check if rate already exists, if not create new one (let UUID auto-generate)
+        const existingRate = await Rate.findOne({
+          where: {
+            source: rate.source,
+            stablecoin: rate.stablecoin,
+            fiat: rate.fiat,
+          },
         });
+
+        if (existingRate) {
+          // Update existing rate
+          await existingRate.update({
+            buyRate: rate.buyRate,
+            sellRate: rate.sellRate,
+          });
+        } else {
+          // Create new rate (UUID will auto-generate)
+          await Rate.create(rate);
+        }
       } catch (error) {
         logger.error(`Failed to save rate ${rate.stablecoin}/${rate.fiat}:`, error);
       }
