@@ -12,7 +12,7 @@ class Config {
   PORT: string = '8000';
 
   @IsOptional()
-  DATABASE_DIALECT: 'postgres' | 'mysql' | 'oracle' = 'postgres';
+  DATABASE_DIALECT: 'postgres' | 'mysql' | 'oracle' | 'sqlite' = 'postgres';
 
   @Transform(({ value }) => (value.toLowerCase() === 'true' ? true : false))
   @IsBoolean()

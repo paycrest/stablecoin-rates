@@ -1,6 +1,7 @@
 import * as mysql2 from 'mysql2';
 import * as oracledb from 'oracledb';
 import * as pg from 'pg';
+import * as sqlite3 from 'sqlite3';
 import { SyncOptions } from 'sequelize';
 import { Sequelize, SequelizeOptions } from 'sequelize-typescript';
 import { logger } from '../common';
@@ -13,6 +14,7 @@ export class DatabaseProvider {
     postgres: pg,
     mysql: mysql2,
     oracle: oracledb,
+    sqlite: sqlite3,
   };
 
   public static db = async () => {
