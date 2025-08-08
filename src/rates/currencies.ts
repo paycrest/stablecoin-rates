@@ -16,7 +16,6 @@ class Currency {
     this._fiat = fiat;
     this._sources = sources;
 
-    // Re-enable automatic scheduling now that VPN is working
     for (const param of this._sources) {
       /**
        * Using croner instead of @nestjs/schedule
@@ -30,25 +29,6 @@ class Currency {
         }
       });
     }
-  }
-
-  // Add a manual method to test data fetching
-  async testFetch(): Promise<boolean> {
-    logger.log(`Testing data fetch for ${this._fiat}`);
-    const results = await Promise.allSettled(
-      this._sources.map(async (param) => {
-        try {
-          return await param.source.fetchData(this._fiat);
-        } catch (error) {
-          logger.error(`Error fetching from ${param.source.constructor.name} for ${this._fiat}:`, error);
-          return false;
-        }
-      })
-    );
-    
-    const successCount = results.filter(r => r.status === 'fulfilled' && r.value === true).length;
-    logger.log(`Fetched data for ${this._fiat}: ${successCount}/${this._sources.length} sources successful`);
-    return successCount > 0;
   }
 }
 
