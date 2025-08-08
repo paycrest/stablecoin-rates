@@ -43,7 +43,7 @@ class Currency {
 export class NGN extends Currency {
   constructor() {
     super('NGN', [
-      { source: new Quidax(), pattern: '0 */5 * * * *' }, // Every 5 minutes at 0 seconds
+      { source: new Quidax(), pattern: '0 */10 * * * *' }, // Every 10 minutes to reduce load
     ]);
   }
 }

@@ -3,6 +3,7 @@ import axios from 'axios';
 import type { Stablecoin } from '../dto/get-rates.dto';
 import { Source } from './source';
 import { logger } from 'src/common';
+import type { ServiceResponse } from '../../common/interfaces';
 
 /**
  * Represents the Quidax data source.
@@ -15,94 +16,116 @@ export class Quidax extends Source<'quidax'> {
   static sourceName = 'quidax' as const;
 
   /**
-   * Supported stablecoins for this source.
+   * Supported stablecoins for Quidax.
    */
   static stablecoins: Stablecoin[] = ['USDT'];
 
   /**
-   * Constructs the URL endpoint for fetching the ticker data for a given market.
+   * Returns the Quidax API endpoint URL for a given fiat currency.
    *
-   * @param ticker - The market ticker string (e.g., 'usdtngn').
-   * @returns The URL endpoint for the provided ticker.
+   * @param fiat - The fiat currency code.
+   * @returns The endpoint URL.
    */
-  private getTickerEndpoint(ticker: string): string {
-    return `https://www.quidax.com/api/v1/markets/tickers/${ticker}`;
+  private getEndpoint(fiat: string): string {
+    return `https://www.quidax.com/api/v1/markets/tickers/usdt${fiat.toLowerCase()}`;
   }
 
   /**
-   * Fetches market data for the given fiat currency and logs the processed prices.
+   * Fetches data from the Quidax API for the specified fiat currency.
    *
-   * This method creates trading pairs by combining supported stablecoins with the provided fiat,
-   * fetches the corresponding ticker data from the Quidax API, and processes the response to extract
-   * the sell and buy rates. The final processed data is then logged.
-   *
-   * @param fiat - The fiat currency for which to fetch data (e.g., 'NGN', 'GHS').
-   * @returns A promise that resolves with the logged data containing market prices.
+   * @param fiat - The fiat currency to fetch data for.
+   * @returns A promise that resolves to a ServiceResponse indicating success or failure.
    */
-  async fetchData(fiat: string) {
-    const pairs = Quidax.stablecoins.map((stablecoin) =>
-      `${stablecoin}${fiat}`.toLowerCase(),
-    );
-
-    let responses: any[] = [];
+  async fetchData(fiat: string): Promise<ServiceResponse> {
     try {
-      responses = await Promise.all(
-        pairs.map((pair) => axios.get(this.getTickerEndpoint(pair))),
-      );
-    } catch (error) {
-      logger.error(error);
-    }
-
-    const prices = responses.reduce(
-      (acc, response) => {
-        if (response.status === HttpStatus.OK && response.data) {
-          const { status, data } = response.data as {
-            status: string;
-            message: string;
-            data: {
-              at: number;
-              ticker: {
-                buy: string;
-                sell: string;
-                low: string;
-                high: string;
-                open: string;
-                last: string;
-                vol: string;
-              };
-              market: string;
-            };
-          };
-
-          if (status === 'success') {
-            const stablecoin = data.market.replace(fiat.toLowerCase(), '');
-            const sellRate = Number(
-              Number.parseFloat(data.ticker.sell).toFixed(2),
-            );
-            const buyRate = Number(
-              Number.parseFloat(data.ticker.buy).toFixed(2),
-            );
-
-            acc.push({
-              fiat,
-              stablecoin,
-              sellRate,
-              buyRate,
-              source: Quidax.sourceName,
+      // Use the request queue to prevent rate limiting
+      const result = await this.queuedRequest(async () => {
+        const promises = Quidax.stablecoins.map(async (stablecoin) => {
+          try {
+            const url = this.getEndpoint(fiat);
+            const response = await axios.get(url, {
+              timeout: 10000,
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; StablecoinRates/1.0)',
+              },
             });
-          }
-        }
-        return acc;
-      },
-      [] as Array<{
-        fiat: string;
-        stablecoin: string;
-        sellRate: number;
-        buyRate: number;
-        source: 'quidax';
-      }>,
-    );
 
-    return this.logData(prices);
+            if (response.status === HttpStatus.OK && response.data) {
+              const data = response.data;
+              
+              // Extract buy and sell rates from Quidax response
+              const buyRate = parseFloat(data.buy || data.bid);
+              const sellRate = parseFloat(data.sell || data.ask);
+
+              if (isNaN(buyRate) || isNaN(sellRate)) {
+                logger.warn(`Invalid rates for ${stablecoin}/${fiat} on Quidax`);
+                return null;
+              }
+
+              return {
+                fiat,
+                stablecoin,
+                buyRate,
+                sellRate,
+                source: Quidax.sourceName,
+              };
+            }
+
+            return null;
+          } catch (error) {
+            logger.error(`Error fetching ${stablecoin}/${fiat} from Quidax:`, error.message);
+            return null;
+          }
+        });
+
+        return Promise.all(promises);
+      });
+
+      const validResults = result.filter(Boolean);
+      
+      if (validResults.length === 0) {
+        return {
+          success: false,
+          message: `No data fetched for ${fiat} from Quidax`,
+          statusCode: HttpStatus.NO_CONTENT,
+        };
+      }
+
+      // Save to database
+      await this.saveRates(validResults);
+
+      return {
+        success: true,
+        message: `Successfully fetched ${validResults.length} rates for ${fiat} from Quidax`,
+        statusCode: HttpStatus.OK,
+        data: validResults,
+      };
+
+    } catch (error) {
+      logger.error(`Quidax fetchData error for ${fiat}:`, error);
+      return {
+        success: false,
+        message: `Failed to fetch data for ${fiat} from Quidax: ${error.message}`,
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      };
+    }
+  }
+
+  /**
+   * Saves the fetched rates to the database.
+   */
+  private async saveRates(rates: any[]): Promise<void> {
+    const { Rate } = await import('../../database/models');
+    
+    for (const rate of rates) {
+      try {
+        await Rate.upsert({
+          id: `${rate.source}-${rate.stablecoin}-${rate.fiat}`,
+          ...rate,
+        });
+      } catch (error) {
+        logger.error(`Failed to save rate ${rate.stablecoin}/${rate.fiat}:`, error);
+      }
+    }
   }
 }

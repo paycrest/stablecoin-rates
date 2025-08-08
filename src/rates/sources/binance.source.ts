@@ -3,6 +3,8 @@ import axios from 'axios';
 import { calculateMedian } from '../../../src/common';
 import type { Stablecoin } from '../dto/get-rates.dto';
 import { Source } from './source';
+import { logger } from 'src/common';
+import type { ServiceResponse } from '../../common/interfaces';
 
 /**
  * Represents the Binance data source.
@@ -29,124 +31,119 @@ export class Binance extends Source<'binance'> {
   }
 
   /**
-   * Fetches and processes market data from Binance for a given fiat currency.
+   * Fetches data from the Binance P2P API for the specified fiat currency.
    *
-   * This method sends separate POST requests for SELL and BUY orders for each supported stablecoin,
-   * processes the returned data to calculate the median price, and then merges the results into a final
-   * array containing both buy and sell rates. The final data is logged using the inherited logData method.
-   *
-   * @param fiat - The fiat currency to fetch data for (e.g., 'GHS').
-   * @returns A promise that resolves with the logged data containing market prices.
+   * @param fiat - The fiat currency to fetch data for.
+   * @returns A promise that resolves to a ServiceResponse indicating success or failure.
    */
-  async fetchData(fiat: string) {
-    const url = this.getEndpoint();
-    const headers = {
-      'Content-Type': 'application/json',
-      'User-Agent': 'insomnia/10.3.1',
-    };
+  async fetchData(fiat: string): Promise<ServiceResponse> {
+    try {
+      // Use the request queue to prevent rate limiting
+      const result = await this.queuedRequest(async () => {
+        const promises = Binance.stablecoins.map(async (stablecoin) => {
+          try {
+            const [buyData, sellData] = await Promise.all([
+              this.fetchMarketData(stablecoin, fiat, 'BUY'),
+              this.fetchMarketData(stablecoin, fiat, 'SELL'),
+            ]);
 
-    /**
-     * Creates payloads for the specified trade type for each stablecoin.
-     *
-     * @param tradeType - The trade type, either 'SELL' or 'BUY'.
-     * @returns An array of payload objects.
-     */
-    const createPayloads = (tradeType: 'SELL' | 'BUY') =>
-      Binance.stablecoins.map((stablecoin) => ({
-        rows: 20,
-        page: 1,
-        tradeType,
-        fiat,
-        asset: stablecoin,
-      }));
+            const buyRates = buyData.map((item: any) => parseFloat(item.adv.price));
+            const sellRates = sellData.map((item: any) => parseFloat(item.adv.price));
 
-    const sellPayloads = createPayloads('SELL');
-    const buyPayloads = createPayloads('BUY');
+            if (buyRates.length === 0 || sellRates.length === 0) {
+              logger.warn(`No rates found for ${stablecoin}/${fiat} on Binance`);
+              return null;
+            }
 
-    // Send parallel POST requests for SELL and BUY payloads.
-    const sellResponses = await Promise.all(
-      sellPayloads.map((data) => axios.post(url, data, { headers })),
-    );
-    const buyResponses = await Promise.all(
-      buyPayloads.map((data) => axios.post(url, data, { headers })),
-    );
+            const buyRate = calculateMedian(buyRates);
+            const sellRate = calculateMedian(sellRates);
 
-    /**
-     * Processes the array of responses from the Binance API.
-     *
-     * Iterates over the responses to extract the asset and its median price from the advertisements.
-     *
-     * @param responses - An array of responses from axios.
-     * @returns An array of objects containing the fiat, stablecoin, rate, and source.
-     */
-    const processResponses = (responses: any[]) => {
-      const results: Array<{
-        fiat: string;
-        stablecoin: string;
-        rate: number;
-        source: 'binance';
-      }> = [];
-      for (const response of responses) {
-        if (
-          response.status === HttpStatus.OK &&
-          response.data &&
-          response.data.success
-        ) {
-          const adPrices: number[] = [];
-          let stablecoin = '';
-          for (const ad of response.data.data) {
-            stablecoin = ad.adv.asset.toLowerCase();
-            const price = Number.parseFloat(ad.adv.price);
-            if (!Number.isNaN(price)) adPrices.push(price);
-          }
-          if (adPrices.length) {
-            const median = calculateMedian(adPrices);
-            results.push({
+            return {
               fiat,
               stablecoin,
-              rate: Number.parseFloat(median.toFixed(2)),
+              buyRate,
+              sellRate,
               source: Binance.sourceName,
-            });
+            };
+          } catch (error) {
+            logger.error(`Error fetching ${stablecoin}/${fiat} from Binance:`, error.message);
+            return null;
           }
-        }
+        });
+
+        return Promise.all(promises);
+      });
+
+      const validResults = result.filter(Boolean);
+      
+      if (validResults.length === 0) {
+        return {
+          success: false,
+          message: `No data fetched for ${fiat} from Binance`,
+          statusCode: HttpStatus.NO_CONTENT,
+        };
       }
-      return results;
-    };
 
-    const sellPrices = processResponses(sellResponses);
-    const buyPrices = processResponses(buyResponses);
+      // Save to database
+      await this.saveRates(validResults);
 
-    // Merge buy and sell prices for each stablecoin.
-    const merged = Binance.stablecoins.reduce(
-      (acc, stablecoin) => {
-        const buy = buyPrices.find(
-          (price) =>
-            price.stablecoin.toLowerCase() === stablecoin.toLowerCase(),
-        );
-        const sell = sellPrices.find(
-          (price) =>
-            price.stablecoin.toLowerCase() === stablecoin.toLowerCase(),
-        );
-        if (buy && sell) {
-          acc.push({
-            fiat: buy.fiat,
-            stablecoin: buy.stablecoin,
-            source: buy.source,
-            buyRate: buy.rate,
-            sellRate: sell.rate,
-          });
-        }
-        return acc;
+      return {
+        success: true,
+        message: `Successfully fetched ${validResults.length} rates for ${fiat} from Binance`,
+        statusCode: HttpStatus.OK,
+        data: validResults,
+      };
+
+    } catch (error) {
+      logger.error(`Binance fetchData error for ${fiat}:`, error);
+      return {
+        success: false,
+        message: `Failed to fetch data for ${fiat} from Binance: ${error.message}`,
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      };
+    }
+  }
+
+  /**
+   * Fetches market data from Binance P2P API.
+   */
+  private async fetchMarketData(asset: string, fiat: string, tradeType: 'BUY' | 'SELL'): Promise<any[]> {
+    const response = await axios.post(
+      this.getEndpoint(),
+      {
+        asset,
+        fiat,
+        tradeType,
+        page: 1,
+        rows: 10,
       },
-      [] as Array<{
-        fiat: string;
-        stablecoin: string;
-        source: 'binance';
-        buyRate: number;
-        sellRate: number;
-      }>,
+      {
+        timeout: 10000,
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (compatible; StablecoinRates/1.0)',
+        },
+      }
     );
 
-    return this.logData(merged);
+    return response.data?.data || [];
+  }
+
+  /**
+   * Saves the fetched rates to the database.
+   */
+  private async saveRates(rates: any[]): Promise<void> {
+    const { Rate } = await import('../../database/models');
+    
+    for (const rate of rates) {
+      try {
+        await Rate.upsert({
+          id: `${rate.source}-${rate.stablecoin}-${rate.fiat}`,
+          ...rate,
+        });
+      } catch (error) {
+        logger.error(`Failed to save rate ${rate.stablecoin}/${rate.fiat}:`, error);
+      }
+    }
   }
 }
