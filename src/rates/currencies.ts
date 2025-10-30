@@ -60,6 +60,28 @@ export class KES extends Currency {
 }
 
 /**
+ * Represents the Tanzania Shilling (TZS) currency.
+ */
+export class TZS extends Currency {
+  constructor() {
+    super('TZS', [
+      { source: new Binance(), pattern: '30 */5 * * * *' }, // Every 5 minutes at 30 seconds
+    ]);
+  }
+}
+
+/**
+ * Represents the Uganda Shilling (UGX) currency.
+ */
+export class UGX extends Currency {
+  constructor() {
+    super('UGX', [
+      { source: new Binance(), pattern: '45 */5 * * * *' }, // Every 5 minutes at 45 seconds
+    ]);
+  }
+}
+
+/**
  * Represents the Ghanaian Cedi (GHS) currency.
  */
 export class GHS extends Currency {
