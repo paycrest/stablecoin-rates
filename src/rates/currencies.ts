@@ -1,4 +1,3 @@
-import { CronExpression } from '@nestjs/schedule';
 import { Cron } from 'croner';
 import { Binance, Quidax, type Source } from './sources';
 import { logger } from 'src/common';
@@ -106,7 +105,10 @@ export class GHS extends Currency {
 export class ZAR extends Currency {
   constructor() {
     super('ZAR', [
-      { source: new Binance(), pattern: '0 1,6,11,16,21,26,31,36,41,46,51,56 * * * *' }, // Every 5 minutes at 1:00, 6:00, 11:00, etc.
+      {
+        source: new Binance(),
+        pattern: '0 1,6,11,16,21,26,31,36,41,46,51,56 * * * *',
+      }, // Every 5 minutes at 1:00, 6:00, 11:00, etc.
     ]);
   }
 }
@@ -177,7 +179,10 @@ export class PKR extends Currency {
 export class INR extends Currency {
   constructor() {
     super('INR', [
-      { source: new Binance(), pattern: '15 1,6,11,16,21,26,31,36,41,46,51,56 * * * *' }, // Every 5 minutes at 1:15, 6:15, 11:15, etc.
+      {
+        source: new Binance(),
+        pattern: '15 1,6,11,16,21,26,31,36,41,46,51,56 * * * *',
+      }, // Every 5 minutes at 1:15, 6:15, 11:15, etc.
     ]);
   }
 }
@@ -247,7 +252,10 @@ export class PHP extends Currency {
 export class SGD extends Currency {
   constructor() {
     super('SGD', [
-      { source: new Binance(), pattern: '30 1,6,11,16,21,26,31,36,41,46,51,56 * * * *' }, // Every 5 minutes at 1:30, 6:30, 11:30, etc.
+      {
+        source: new Binance(),
+        pattern: '30 1,6,11,16,21,26,31,36,41,46,51,56 * * * *',
+      }, // Every 5 minutes at 1:30, 6:30, 11:30, etc.
     ]);
   }
 }
@@ -301,7 +309,10 @@ export class MXN extends Currency {
   constructor() {
     super('MXN', [
       { source: new Binance(), pattern: '45 */5 * * * *' }, // Every 5 minutes at 45 seconds
-      { source: new Quidax(), pattern: '45 1,6,11,16,21,26,31,36,41,46,51,56 * * * *' }, // Every 5 minutes at 1:45, 6:45, 11:45, etc.
+      {
+        source: new Quidax(),
+        pattern: '45 1,6,11,16,21,26,31,36,41,46,51,56 * * * *',
+      }, // Every 5 minutes at 1:45, 6:45, 11:45, etc.
     ]);
   }
 }
@@ -373,7 +384,10 @@ export class PLN extends Currency {
 export class COP extends Currency {
   constructor() {
     super('COP', [
-      { source: new Binance(), pattern: '0 2,7,12,17,22,27,32,37,42,47,52,57 * * * *' }, // Every 5 minutes at 2:00, 7:00, 12:00, etc.
+      {
+        source: new Binance(),
+        pattern: '0 2,7,12,17,22,27,32,37,42,47,52,57 * * * *',
+      }, // Every 5 minutes at 2:00, 7:00, 12:00, etc.
     ]);
   }
 }
@@ -407,7 +421,10 @@ export class CLP extends Currency {
 export class TRY extends Currency {
   constructor() {
     super('TRY', [
-      { source: new Binance(), pattern: '30 2,7,12,17,22,27,32,37,42,47,52,57 * * * *' }, // Every 5 minutes at 2:30, 7:30, 12:30, etc.
+      {
+        source: new Binance(),
+        pattern: '30 2,7,12,17,22,27,32,37,42,47,52,57 * * * *',
+      }, // Every 5 minutes at 2:30, 7:30, 12:30, etc.
     ]);
   }
 }
@@ -423,7 +440,10 @@ export class TRY extends Currency {
 export class TWD extends Currency {
   constructor() {
     super('TWD', [
-      { source: new Binance(), pattern: '45 2,7,12,17,22,27,32,37,42,47,52,57 * * * *' }, // Every 5 minutes at 2:45, 7:45, 12:45, etc.
+      {
+        source: new Binance(),
+        pattern: '45 2,7,12,17,22,27,32,37,42,47,52,57 * * * *',
+      }, // Every 5 minutes at 2:45, 7:45, 12:45, etc.
     ]);
   }
 }
@@ -438,7 +458,10 @@ export class TWD extends Currency {
 export class RSD extends Currency {
   constructor() {
     super('RSD', [
-      { source: new Binance(), pattern: '0 3,8,13,18,23,28,33,38,43,48,53,58 * * * *' }, // Every 5 minutes at 3:00, 8:00, 13:00, etc.
+      {
+        source: new Binance(),
+        pattern: '0 3,8,13,18,23,28,33,38,43,48,53,58 * * * *',
+      }, // Every 5 minutes at 3:00, 8:00, 13:00, etc.
     ]);
   }
 }
@@ -454,7 +477,10 @@ export class RSD extends Currency {
 export class XOF extends Currency {
   constructor() {
     super('XOF', [
-      { source: new Binance(), pattern: '15 3,8,13,18,23,28,33,38,43,48,53,58 * * * *' }, // Every 5 minutes at 3:15, 8:15, 13:15, etc.
+      {
+        source: new Binance(),
+        pattern: '15 3,8,13,18,23,28,33,38,43,48,53,58 * * * *',
+      }, // Every 5 minutes at 3:15, 8:15, 13:15, etc.
     ]);
   }
 }
@@ -469,7 +495,10 @@ export class XOF extends Currency {
 export class MUR extends Currency {
   constructor() {
     super('MUR', [
-      { source: new Binance(), pattern: '30 3,8,13,18,23,28,33,38,43,48,53,58 * * * *' }, // Every 5 minutes at 3:30, 8:30, 13:30, etc.
+      {
+        source: new Binance(),
+        pattern: '30 3,8,13,18,23,28,33,38,43,48,53,58 * * * *',
+      }, // Every 5 minutes at 3:30, 8:30, 13:30, etc.
     ]);
   }
 }

@@ -50,15 +50,21 @@ export class Quidax extends Source<'quidax'> {
               },
             });
 
-            if (response.status === HttpStatus.OK && response.data && response.data.status === 'success') {
+            if (
+              response.status === HttpStatus.OK &&
+              response.data &&
+              response.data.status === 'success'
+            ) {
               const ticker = response.data.data.ticker;
-              
+
               // Extract buy and sell rates from Quidax response
               const buyRate = parseFloat(ticker.buy);
               const sellRate = parseFloat(ticker.sell);
 
               if (isNaN(buyRate) || isNaN(sellRate)) {
-                logger.warn(`Invalid rates for ${stablecoin}/${fiat} on Quidax`);
+                logger.warn(
+                  `Invalid rates for ${stablecoin}/${fiat} on Quidax`,
+                );
                 return null;
               }
 
@@ -73,7 +79,10 @@ export class Quidax extends Source<'quidax'> {
 
             return null;
           } catch (error) {
-            logger.error(`Error fetching ${stablecoin}/${fiat} from Quidax:`, error.message);
+            logger.error(
+              `Error fetching ${stablecoin}/${fiat} from Quidax:`,
+              error.message,
+            );
             return null;
           }
         });
@@ -82,7 +91,7 @@ export class Quidax extends Source<'quidax'> {
       });
 
       const validResults = result.filter(Boolean);
-      
+
       if (validResults.length === 0) {
         return {
           success: false,
@@ -100,7 +109,6 @@ export class Quidax extends Source<'quidax'> {
         statusCode: HttpStatus.OK,
         data: validResults,
       };
-
     } catch (error) {
       logger.error(`Quidax fetchData error for ${fiat}:`, error);
       return {
@@ -116,7 +124,7 @@ export class Quidax extends Source<'quidax'> {
    */
   private async saveRates(rates: any[]): Promise<void> {
     const { Rate } = await import('../../database/models');
-    
+
     for (const rate of rates) {
       try {
         // Check if rate already exists, if not create new one (let UUID auto-generate)
@@ -139,7 +147,10 @@ export class Quidax extends Source<'quidax'> {
           await Rate.create(rate);
         }
       } catch (error) {
-        logger.error(`Failed to save rate ${rate.stablecoin}/${rate.fiat}:`, error);
+        logger.error(
+          `Failed to save rate ${rate.stablecoin}/${rate.fiat}:`,
+          error,
+        );
       }
     }
   }

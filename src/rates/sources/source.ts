@@ -45,7 +45,7 @@ class RequestQueue {
       // Wait if we need to delay
       if (timeSinceLastRequest < this.minDelayBetweenRequests) {
         const delayNeeded = this.minDelayBetweenRequests - timeSinceLastRequest;
-        await new Promise(resolve => setTimeout(resolve, delayNeeded));
+        await new Promise((resolve) => setTimeout(resolve, delayNeeded));
       }
 
       const request = this.queue.shift();

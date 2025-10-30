@@ -47,11 +47,17 @@ export class Binance extends Source<'binance'> {
               this.fetchMarketData(stablecoin, fiat, 'SELL'),
             ]);
 
-            const buyRates = buyData.map((item: any) => parseFloat(item.adv.price));
-            const sellRates = sellData.map((item: any) => parseFloat(item.adv.price));
+            const buyRates = buyData.map((item: any) =>
+              parseFloat(item.adv.price),
+            );
+            const sellRates = sellData.map((item: any) =>
+              parseFloat(item.adv.price),
+            );
 
             if (buyRates.length === 0 || sellRates.length === 0) {
-              logger.warn(`No rates found for ${stablecoin}/${fiat} on Binance`);
+              logger.warn(
+                `No rates found for ${stablecoin}/${fiat} on Binance`,
+              );
               return null;
             }
 
@@ -66,7 +72,10 @@ export class Binance extends Source<'binance'> {
               source: Binance.sourceName,
             };
           } catch (error) {
-            logger.error(`Error fetching ${stablecoin}/${fiat} from Binance:`, error.message);
+            logger.error(
+              `Error fetching ${stablecoin}/${fiat} from Binance:`,
+              error.message,
+            );
             return null;
           }
         });
@@ -75,7 +84,7 @@ export class Binance extends Source<'binance'> {
       });
 
       const validResults = result.filter(Boolean);
-      
+
       if (validResults.length === 0) {
         return {
           success: false,
@@ -93,7 +102,6 @@ export class Binance extends Source<'binance'> {
         statusCode: HttpStatus.OK,
         data: validResults,
       };
-
     } catch (error) {
       logger.error(`Binance fetchData error for ${fiat}:`, error);
       return {
@@ -107,7 +115,11 @@ export class Binance extends Source<'binance'> {
   /**
    * Fetches market data from Binance P2P API.
    */
-  private async fetchMarketData(asset: string, fiat: string, tradeType: 'BUY' | 'SELL'): Promise<any[]> {
+  private async fetchMarketData(
+    asset: string,
+    fiat: string,
+    tradeType: 'BUY' | 'SELL',
+  ): Promise<any[]> {
     const response = await axios.post(
       this.getEndpoint(),
       {
@@ -123,7 +135,7 @@ export class Binance extends Source<'binance'> {
           'Content-Type': 'application/json',
           'User-Agent': 'Mozilla/5.0 (compatible; StablecoinRates/1.0)',
         },
-      }
+      },
     );
 
     return response.data?.data || [];
@@ -134,7 +146,7 @@ export class Binance extends Source<'binance'> {
    */
   private async saveRates(rates: any[]): Promise<void> {
     const { Rate } = await import('../../database/models');
-    
+
     for (const rate of rates) {
       try {
         // Check if rate already exists, if not create new one (let UUID auto-generate)
@@ -157,7 +169,10 @@ export class Binance extends Source<'binance'> {
           await Rate.create(rate);
         }
       } catch (error) {
-        logger.error(`Failed to save rate ${rate.stablecoin}/${rate.fiat}:`, error);
+        logger.error(
+          `Failed to save rate ${rate.stablecoin}/${rate.fiat}:`,
+          error,
+        );
       }
     }
   }
