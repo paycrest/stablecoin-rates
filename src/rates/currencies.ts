@@ -1,4 +1,3 @@
-import { CronExpression } from '@nestjs/schedule';
 import { Cron } from 'croner';
 import { Binance, Quidax, type Source } from './sources';
 import { logger } from 'src/common';
