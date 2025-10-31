@@ -148,7 +148,7 @@ const fiat = ['AED', 'ALL', 'ANG', 'AOA', 'ARS', 'AWG', 'AZN', 'BAM', 'BBD', 'BD
   'NZD', 'OMR', 'PAB', 'PEN', 'PGK', 'PHP', 'PKR', 'PLN', 'PYG', 'QAR', 'RON', 'RSD',
   'RUB', 'RWF', 'SAR', 'SBD', 'SEK', 'SGD', 'SHP', 'SLE', 'SOS', 'SRD', 'STN', 'SVC',
   'SYP', 'SZL', 'TJS', 'TMT', 'TND', 'TOP', 'TRY', 'TTD', 'TWD', 'TZS', 'UAH', 'UGX',
-  'UYU', 'UZS', 'VES', 'VND', 'VUV', 'WST', 'XAF', 'XOF', 'YER', 'ZAR', 'ZMW',
+  'USD', 'UYU', 'UZS', 'VES', 'VND', 'VUV', 'WST', 'XAF', 'XOF', 'YER', 'ZAR', 'ZMW',
   'ZWL'];
 
 export class GetRatesDTO {

@@ -1489,7 +1489,6 @@ export class ARS extends Currency {
   }
 }
 
-
 /**
  * Represents the United Arab Emirates Dirham (AED) currency.
  */
@@ -1501,10 +1500,12 @@ export class AED extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Brazilian Real (BRL) currency.
  */
 export class BRL extends Currency { constructor() { super('BRL', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Chinese Yuan Renminbi (CNY) currency.
  */
@@ -1516,14 +1517,17 @@ export class CNY extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the South Korean Won (KRW) currency.
  */
 export class KRW extends Currency { constructor() { super('KRW', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Russian Ruble (RUB) currency.
  */
 export class RUB extends Currency { constructor() { super('RUB', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Ukrainian Hryvnia (UAH) currency.
  */
@@ -1535,6 +1539,7 @@ export class UAH extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Uruguayan Peso (UYU) currency.
  */
@@ -1546,6 +1551,7 @@ export class UYU extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Angolan Kwanza (AOA) currency.
  */
@@ -1556,6 +1562,7 @@ export class AOA extends Currency {
       { source: new Binance(), pattern: '15 */5 * * * *' },]);
   }
 }
+
 /**
  * Represents the Guinean Franc (GNF) currency.
  */
@@ -1567,10 +1574,12 @@ export class GNF extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Lesotho Loti (LSL) currency.
  */
 export class LSL extends Currency { constructor() { super('LSL', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Mozambican Metical (MZN) currency.
  */
@@ -1582,6 +1591,7 @@ export class MZN extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Rwandan Franc (RWF) currency.
  */
@@ -1593,6 +1603,7 @@ export class RWF extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Sudanese Pound (SDG) currency.
  */
@@ -1604,14 +1615,17 @@ export class SDG extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Eswatini Lilangeni (SZL) currency.
  */
 export class SZL extends Currency { constructor() { super('SZL', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the São Tomé and Príncipe Dobra (STN) currency.
  */
 export class STN extends Currency { constructor() { super('STN', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Zambian Kwacha (ZMW) currency.
  */
@@ -1623,10 +1637,12 @@ export class ZMW extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Zimbabwean Dollar (ZWL) currency.
  */
 export class ZWL extends Currency { constructor() { super('ZWL', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Iraqi Dinar (IQD) currency.
  */
@@ -1638,10 +1654,12 @@ export class IQD extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Iranian Rial (IRR) currency.
  */
 export class IRR extends Currency { constructor() { super('IRR', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Syrian Pound (SYP) currency.
  */
@@ -1653,6 +1671,7 @@ export class SYP extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Tunisian Dinar (TND) currency.
  */
@@ -1664,6 +1683,7 @@ export class TND extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Yemeni Rial (YER) currency.
  */
@@ -1675,6 +1695,7 @@ export class YER extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Sri Lankan Rupee (LKR) currency.
  */
@@ -1686,10 +1707,12 @@ export class LKR extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Myanmar Kyat (MMK) currency.
  */
 export class MMK extends Currency { constructor() { super('MMK', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Mongolian Tögrög (MNT) currency.
  */
@@ -1701,6 +1724,7 @@ export class MNT extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Nepalese Rupee (NPR) currency.
  */
@@ -1712,6 +1736,7 @@ export class NPR extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Tajikistani Somoni (TJS) currency.
  */
@@ -1723,54 +1748,67 @@ export class TJS extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Uzbekistani Som (UZS) currency.
  */
 export class UZS extends Currency { constructor() { super('UZS', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Surinamese Dollar (SRD) currency.
  */
 export class SRD extends Currency { constructor() { super('SRD', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Salvadoran Colón (SVC) currency.
  */
 export class SVC extends Currency { constructor() { super('SVC', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Fijian Dollar (FJD) currency.
  */
 export class FJD extends Currency { constructor() { super('FJD', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Solomon Islands Dollar (SBD) currency.
  */
 export class SBD extends Currency { constructor() { super('SBD', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Tongan Paʻanga (TOP) currency.
  */
 export class TOP extends Currency { constructor() { super('TOP', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Vanuatu Vatu (VUV) currency.
  */
 export class VUV extends Currency { constructor() { super('VUV', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Samoan Tala (WST) currency.
  */
 export class WST extends Currency { constructor() { super('WST', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Macedonian Denar (MKD) currency.
  */
 export class MKD extends Currency { constructor() { super('MKD', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Netherlands Antillean Guilder (ANG) currency.
  */
 export class ANG extends Currency { constructor() { super('ANG', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Aruban Florin (AWG) currency.
  */
 export class AWG extends Currency { constructor() { super('AWG', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Barbadian Dollar (BBD) currency.
  */
 export class BBD extends Currency { constructor() { super('BBD', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Burundian Franc (BIF) currency.
  */
@@ -1782,10 +1820,12 @@ export class BIF extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Bermudian Dollar (BMD) currency.
  */
 export class BMD extends Currency { constructor() { super('BMD', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Brunei Dollar (BND) currency.
  */
@@ -1796,14 +1836,17 @@ export class BND extends Currency {
       { source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]);
   }
 }
+
 /**
  * Represents the Cuban Peso (CUP) currency.
  */
 export class CUP extends Currency { constructor() { super('CUP', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Cape Verdean Escudo (CVE) currency.
  */
 export class CVE extends Currency { constructor() { super('CVE', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Djiboutian Franc (DJF) currency.
  */
@@ -1816,14 +1859,17 @@ export class FKP extends Currency { constructor() { super('FKP', [{ source: new 
  * Represents the Gibraltar Pound (GIP) currency.
  */
 export class GIP extends Currency { constructor() { super('GIP', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Comorian Franc (KMF) currency.
  */
 export class KMF extends Currency { constructor() { super('KMF', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the North Korean Won (KPW) currency.
  */
 export class KPW extends Currency { constructor() { super('KPW', [{ source: new FawazExchangeApi(), pattern: '15 */5 * * * *' }]); } }
+
 /**
  * Represents the Macanese Pataca (MOP) currency.
  */
@@ -1835,6 +1881,7 @@ export class MOP extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Mauritanian Ouguiya (MRU) currency.
  */
@@ -1846,6 +1893,7 @@ export class MRU extends Currency {
     ]);
   }
 }
+
 /**
  * Represents the Saint Helena Pound (SHP) currency.
  */
