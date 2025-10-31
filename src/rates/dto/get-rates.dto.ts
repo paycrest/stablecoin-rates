@@ -41,6 +41,7 @@ export type Fiat =
   'FJD' |
   'FKP' |
   'GEL' |
+  'GGP' |
   'GHS' |
   'GIP' |
   'GMD' |
