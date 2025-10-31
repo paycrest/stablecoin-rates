@@ -27,7 +27,6 @@ export class RatesModule implements OnModuleInit {
 
     // Instantiate each currency class
     currencyClasses.forEach((CurrencyClass: any) => {
-      new CurrencyClass();
       try {
         new CurrencyClass();
         successCount++;
