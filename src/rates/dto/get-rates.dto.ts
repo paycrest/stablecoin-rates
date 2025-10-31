@@ -41,7 +41,6 @@ export type Fiat =
   'FJD' |
   'FKP' |
   'GEL' |
-  'GGP' |
   'GHS' |
   'GIP' |
   'GMD' |
@@ -142,7 +141,7 @@ export type Fiat =
 const fiat = ['AED', 'ALL', 'ANG', 'AOA', 'ARS', 'AWG', 'AZN', 'BAM', 'BBD', 'BDT', 'BHD', 'BIF',
   'BMD', 'BND', 'BOB', 'BRL', 'BSD', 'BWP', 'BZD', 'CAD', 'CDF', 'CHF', 'CLP', 'CNY',
   'COP', 'CRC', 'CZK', 'CUP', 'CVE', 'DKK', 'DJF', 'EGP', 'ETB', 'FJD', 'FKP', 'GEL',
-  'GGP', 'GHS', 'GIP', 'GMD', 'GNF', 'GTQ', 'HKD', 'HNL', 'HTG', 'HUF', 'IDR', 'INR',
+  'GHS', 'GIP', 'GMD', 'GNF', 'GTQ', 'HKD', 'HNL', 'HTG', 'HUF', 'IDR', 'INR',
   'IQD', 'IRR', 'ISK', 'JMD', 'JOD', 'JPY', 'KES', 'KGS', 'KHR', 'KMF', 'KPW', 'KRW',
   'KWD', 'KYD', 'KZT', 'LAK', 'LBP', 'LRD', 'LSL', 'MAD', 'MDL', 'MKD', 'MMK', 'MNT',
   'MOP', 'MRU', 'MUR', 'MWK', 'MXN', 'MYR', 'MZN', 'NAD', 'NGN', 'NIO', 'NOK', 'NPR',
