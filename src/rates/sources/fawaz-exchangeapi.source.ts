@@ -29,7 +29,7 @@ export class FawazExchangeApi extends Source<'fawaz-exchange-api'> {
 
   /**
    * Fetches rates from the Fawaz Ahmed currency API for the specified fiat currency.
-   * Only supports USDT as the stablecoin.
+   * Supports USDT and USDC stablecoins
    *
    * @param fiat - The fiat currency code to fetch the rate for (e.g., 'usd', 'eur').
    * @returns A promise that resolves to a ServiceResponse.
@@ -43,8 +43,19 @@ export class FawazExchangeApi extends Source<'fawaz-exchange-api'> {
         const endpoint = this.getEndpoint(stablecoin);
         try {
           const response = await axios.get(endpoint, { timeout: 10000 });
+
+          if (!response.data || typeof response.data !== 'object') {
+            logger.warn(`Invalid response structure from Fawaz Ahmed API for ${stablecoin}`);
+            continue;
+          }
+
           const { date } = response.data;
           const ratesObj = response.data[stablecoin.toLowerCase()];
+
+          if (!date) {
+            logger.warn(`Missing date in response from Fawaz Ahmed API for ${stablecoin}`);
+            continue;
+          }
           const rate = ratesObj ? ratesObj[fiatCode] : undefined;
           if (!rate) {
             logger.warn(`No rate found for ${stablecoin}/${fiatCode} from Fawaz Ahmed API`);
@@ -59,7 +70,7 @@ export class FawazExchangeApi extends Source<'fawaz-exchange-api'> {
             date,
           });
         } catch (error) {
-          logger.error(`Fawaz Ahmed API error for ${stablecoin}/${fiatCode}:`, error.message);
+          logger.error(`Fawaz Ahmed API error for ${stablecoin}/${fiatCode}:`, error);
         }
       }
 
