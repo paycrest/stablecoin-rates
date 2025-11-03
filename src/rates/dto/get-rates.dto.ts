@@ -5,82 +5,89 @@ export type Stablecoin = 'USDT' | 'USDC';
 const coin = ['USDT', 'USDC'];
 
 export type Fiat =
-  | 'KES'
-  | 'NGN'
-  | 'GHS'
-  | 'TZS'
-  | 'UGX'
-  | 'XOF'
-  | 'MYR'
-  | 'IDR'
-  | 'PKR'
-  | 'INR'
-  | 'THB'
-  | 'VND'
-  | 'PHP'
-  | 'SGD'
-  | 'HKD'
-  | 'MXN'
-  | 'ZAR'
-  | 'SAR'
-  | 'CZK'
-  | 'HUF'
-  | 'PLN'
-  | 'COP'
-  | 'CLP'
-  | 'TRY'
-  | 'TWD'
-  | 'RSD'
-  | 'XOF'
-  | 'MUR'
-  | 'BHD'
-  | 'JOD'
-  | 'OMR'
-  | 'KZT'
-  | 'RON'
-  | 'PAB'
-  | 'PEN'
+  | 'AED'
   | 'ALL'
+  | 'ANG'
+  | 'AOA'
+  | 'ARS'
+  | 'AWG'
   | 'AZN'
   | 'BAM'
+  | 'BBD'
   | 'BDT'
-  | 'BGN'
   | 'BHD'
+  | 'BIF'
+  | 'BMD'
+  | 'BND'
   | 'BOB'
+  | 'BRL'
   | 'BSD'
   | 'BWP'
   | 'BZD'
   | 'CAD'
   | 'CDF'
   | 'CHF'
+  | 'CLP'
+  | 'CNY'
+  | 'COP'
   | 'CRC'
-  | 'GBP'
+  | 'CZK'
+  | 'CUP'
+  | 'CVE'
   | 'DKK'
-  | 'ETB'
+  | 'DJF'
   | 'EGP'
+  | 'ETB'
+  | 'FJD'
+  | 'FKP'
   | 'GEL'
   | 'GHS'
+  | 'GIP'
   | 'GMD'
+  | 'GNF'
   | 'GTQ'
+  | 'HKD'
   | 'HNL'
   | 'HTG'
+  | 'HUF'
+  | 'IDR'
+  | 'INR'
+  | 'IQD'
+  | 'IRR'
   | 'ISK'
   | 'JMD'
   | 'JOD'
   | 'JPY'
+  | 'KES'
   | 'KGS'
   | 'KHR'
+  | 'KMF'
+  | 'KPW'
+  | 'KRW'
   | 'KWD'
   | 'KYD'
   | 'KZT'
   | 'LAK'
   | 'LBP'
   | 'LRD'
+  | 'LSL'
   | 'MAD'
   | 'MDL'
+  | 'MKD'
+  | 'MMK'
+  | 'MNT'
+  | 'MOP'
+  | 'MRU'
+  | 'MUR'
+  | 'MWK'
+  | 'MXN'
+  | 'MYR'
+  | 'MZN'
   | 'NAD'
+  | 'NGN'
   | 'NIO'
   | 'NOK'
+  | 'NPR'
   | 'NZD'
   | 'OMR'
   | 'PAB'
@@ -88,95 +95,133 @@ export type Fiat =
   | 'PGK'
   | 'PHP'
   | 'PKR'
+  | 'PLN'
   | 'PYG'
   | 'QAR'
   | 'RON'
   | 'RSD'
+  | 'RUB'
+  | 'RWF'
+  | 'SAR'
+  | 'SBD'
   | 'SEK'
+  | 'SGD'
+  | 'SHP'
   | 'SLE'
   | 'SOS'
+  | 'SRD'
+  | 'STN'
+  | 'SVC'
+  | 'SYP'
+  | 'SZL'
+  | 'TJS'
   | 'TMT'
+  | 'TND'
+  | 'TOP'
+  | 'TRY'
   | 'TTD'
+  | 'TWD'
+  | 'TZS'
+  | 'UAH'
+  | 'UGX'
+  | 'USD'
+  | 'UYU'
+  | 'UZS'
   | 'VES'
-  | 'XAF';
+  | 'VND'
+  | 'VUV'
+  | 'WST'
+  | 'XAF'
+  | 'XOF'
+  | 'YER'
+  | 'ZAR'
+  | 'ZMW'
+  | 'ZWL';
 
 const fiat = [
-  'KES',
-  'NGN',
-  'GHS',
-  'TZS',
-  'UGX',
-  'XOF',
-  'MXN',
-  'MYR',
-  'IDR',
-  'PKR',
-  'INR',
-  'THB',
-  'VND',
-  'PHP',
-  'SGD',
-  'HKD',
-  'ZAR',
-  'SAR',
-  'CZK',
-  'HUF',
-  'PLN',
-  'COP',
-  'CLP',
-  'TRY',
-  'TWD',
-  'RSD',
-  'XOF',
-  'MUR',
-  'BHD',
-  'JOD',
-  'OMR',
-  'KZT',
-  'RON',
-  'PAB',
-  'PEN',
+  'AED',
   'ALL',
+  'ANG',
+  'AOA',
+  'ARS',
+  'AWG',
   'AZN',
   'BAM',
+  'BBD',
   'BDT',
-  'BGN',
   'BHD',
+  'BIF',
+  'BMD',
+  'BND',
   'BOB',
+  'BRL',
   'BSD',
   'BWP',
   'BZD',
   'CAD',
   'CDF',
   'CHF',
+  'CLP',
+  'CNY',
+  'COP',
   'CRC',
-  'GBP',
+  'CZK',
+  'CUP',
+  'CVE',
   'DKK',
-  'ETB',
+  'DJF',
   'EGP',
+  'ETB',
+  'FJD',
+  'FKP',
   'GEL',
   'GHS',
+  'GIP',
   'GMD',
+  'GNF',
   'GTQ',
+  'HKD',
   'HNL',
   'HTG',
+  'HUF',
+  'IDR',
+  'INR',
+  'IQD',
+  'IRR',
   'ISK',
   'JMD',
   'JOD',
   'JPY',
+  'KES',
   'KGS',
   'KHR',
+  'KMF',
+  'KPW',
+  'KRW',
   'KWD',
   'KYD',
   'KZT',
   'LAK',
   'LBP',
   'LRD',
+  'LSL',
   'MAD',
   'MDL',
+  'MKD',
+  'MMK',
+  'MNT',
+  'MOP',
+  'MRU',
+  'MUR',
+  'MWK',
+  'MXN',
+  'MYR',
+  'MZN',
   'NAD',
+  'NGN',
   'NIO',
   'NOK',
+  'NPR',
   'NZD',
   'OMR',
   'PAB',
@@ -184,17 +229,48 @@ const fiat = [
   'PGK',
   'PHP',
   'PKR',
+  'PLN',
   'PYG',
   'QAR',
   'RON',
   'RSD',
+  'RUB',
+  'RWF',
+  'SAR',
+  'SBD',
   'SEK',
+  'SGD',
+  'SHP',
   'SLE',
   'SOS',
+  'SRD',
+  'STN',
+  'SVC',
+  'SYP',
+  'SZL',
+  'TJS',
   'TMT',
+  'TND',
+  'TOP',
+  'TRY',
   'TTD',
+  'TWD',
+  'TZS',
+  'UAH',
+  'UGX',
+  'USD',
+  'UYU',
+  'UZS',
   'VES',
+  'VND',
+  'VUV',
+  'WST',
   'XAF',
+  'XOF',
+  'YER',
+  'ZAR',
+  'ZMW',
+  'ZWL',
 ];
 
 export class GetRatesDTO {
