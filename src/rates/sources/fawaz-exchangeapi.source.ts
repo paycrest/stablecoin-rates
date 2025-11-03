@@ -21,23 +21,12 @@ export class FawazExchangeApi extends Source<'fawaz-exchange-api'> {
   static stablecoins: Stablecoin[] = ['USDT', 'USDC'];
 
   /**
-   * Returns the Fawaz Exchange Api endpoint URL.
-   *
-   * @returns The endpoint URL.
-   */
-  /**
    * Returns the Fawaz Ahmed currency API endpoint URL for USDT.
    */
-  private getEndpoint(): string {
-    return 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usdt.json';
+  private getEndpoint(stablecoin: Stablecoin): string {
+    return `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${stablecoin.toLowerCase()}.json`;
   }
 
-  /**
-   * Fetches data from the Fawaz Exchange Api for the specified fiat currency.
-   *
-   * @param fiat - The fiat currency to fetch data for.
-   * @returns A promise that resolves to a ServiceResponse indicating success or failure.
-   */
   /**
    * Fetches rates from the Fawaz Ahmed currency API for the specified fiat currency.
    * Only supports USDT as the stablecoin.
@@ -51,7 +40,7 @@ export class FawazExchangeApi extends Source<'fawaz-exchange-api'> {
       const fiatCodeUpper = fiat.toUpperCase();
       const results = [];
       for (const stablecoin of FawazExchangeApi.stablecoins) {
-        const endpoint = `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${stablecoin.toLowerCase()}.json`;
+        const endpoint = this.getEndpoint(stablecoin);
         try {
           const response = await axios.get(endpoint, { timeout: 10000 });
           const { date } = response.data;
