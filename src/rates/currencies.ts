@@ -41,8 +41,8 @@ const SOURCE_CONFIGS: Record<string, SourceConfig> = {
   },
   FawazExchangeApi: {
     minInterval: 4,
-    maxInterval: 7,
-    maxJitter: 90, // 0-90 seconds jitter (1.5 minutes)
+    maxInterval: 10,
+    maxJitter: 120, // 0-120 seconds jitter (2 minutes)
   },
 };
 
