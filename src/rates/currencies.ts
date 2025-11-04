@@ -41,8 +41,8 @@ const SOURCE_CONFIGS: Record<string, SourceConfig> = {
   },
   FawazExchangeApi: {
     minInterval: 4,
-    maxInterval: 7,
-    maxJitter: 90, // 0-90 seconds jitter (1.5 minutes)
+    maxInterval: 10,
+    maxJitter: 120, // 0-120 seconds jitter (2 minutes)
   },
 };
 
@@ -599,7 +599,6 @@ export class INR extends Currency {
 export class THB extends Currency {
   constructor() {
     super('THB', [
-      { source: new Binance() }, // Every 5 minutes at 15 seconds
       { source: new FawazExchangeApi() },
     ]);
   }
@@ -655,10 +654,6 @@ export class PHP extends Currency {
 export class SGD extends Currency {
   constructor() {
     super('SGD', [
-      {
-        source: new Binance(),
-        pattern: '30 1,6,11,16,21,26,31,36,41,46,51,56 * * * *',
-      }, // Every 5 minutes at 1:30, 6:30, 11:30, etc.
       { source: new FawazExchangeApi() },
     ]);
   }
@@ -1084,7 +1079,6 @@ export class AZN extends Currency {
 export class BAM extends Currency {
   constructor() {
     super('BAM', [
-      { source: new Binance(), pattern: '0 */1 * * * *' }, // Every minute at 0 seconds
       { source: new FawazExchangeApi() },
     ]);
   }
@@ -1152,7 +1146,6 @@ export class BOB extends Currency {
 export class BSD extends Currency {
   constructor() {
     super('BSD', [
-      { source: new Binance(), pattern: '20 */1 * * * *' }, // Every minute at 20 seconds
       { source: new FawazExchangeApi() },
     ]);
   }
@@ -1186,7 +1179,6 @@ export class BWP extends Currency {
 export class BZD extends Currency {
   constructor() {
     super('BZD', [
-      { source: new Binance(), pattern: '30 */1 * * * *' }, // Every minute at 30 seconds
       { source: new FawazExchangeApi() },
     ]);
   }
@@ -1424,7 +1416,6 @@ export class HTG extends Currency {
 export class ISK extends Currency {
   constructor() {
     super('ISK', [
-      { source: new Binance(), pattern: '40 * * * * *' }, // Every minute at 40 seconds
       { source: new FawazExchangeApi() },
     ]);
   }
@@ -1441,7 +1432,6 @@ export class ISK extends Currency {
 export class JMD extends Currency {
   constructor() {
     super('JMD', [
-      { source: new Binance(), pattern: '45 * * * * *' }, // Every minute at 45 seconds
       { source: new FawazExchangeApi() },
     ]);
   }
@@ -1526,7 +1516,6 @@ export class KWD extends Currency {
 export class KYD extends Currency {
   constructor() {
     super('KYD', [
-      { source: new Binance(), pattern: '12 * * * * *' }, // Every minute at 12 seconds
       { source: new FawazExchangeApi() },
     ]);
   }
@@ -1798,7 +1787,7 @@ export class SOS extends Currency {
 export class TMT extends Currency {
   constructor() {
     super('TMT', [
-      { source: new Binance(), pattern: '33 * * * * *' }, // Every minute at 33 seconds
+      // { source: new Binance(), pattern: '33 * * * * *' }, // Every minute at 33 seconds
       { source: new FawazExchangeApi() },
     ]);
   }
@@ -1815,7 +1804,6 @@ export class TMT extends Currency {
 export class TTD extends Currency {
   constructor() {
     super('TTD', [
-      { source: new Binance(), pattern: '38 * * * * *' }, // Every minute at 38 seconds
       { source: new FawazExchangeApi() },
     ]);
   }
@@ -1861,8 +1849,7 @@ export class XAF extends Currency {
 export class MWK extends Currency {
   constructor() {
     super('MWK', [
-      { source: new FawazExchangeApi() }, // Every 5 minutes at 15 seconds
-      { source: new Binance() },
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -1873,7 +1860,7 @@ export class MWK extends Currency {
 export class ARS extends Currency {
   constructor() {
     super('ARS', [
-      { source: new FawazExchangeApi() }, // Every 5 minutes at 15 seconds
+      { source: new FawazExchangeApi() },
       { source: new Binance() },
     ]);
   }
