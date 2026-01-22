@@ -19,9 +19,9 @@ interface ScheduledTask {
  * Configuration for source-based random intervals
  */
 interface SourceConfig {
-  minInterval: number;  // Minimum interval in minutes
-  maxInterval: number;  // Maximum interval in minutes
-  maxJitter: number;    // Maximum jitter in seconds
+  minInterval: number; // Minimum interval in minutes
+  maxInterval: number; // Maximum interval in minutes
+  maxJitter: number; // Maximum jitter in seconds
 }
 
 /**
@@ -94,7 +94,10 @@ class CurrencyScheduler {
       const config = SOURCE_CONFIGS[sourceName] || DEFAULT_SOURCE_CONFIG;
 
       // Generate random interval within configured range
-      intervalMinutes = this.getRandomInt(config.minInterval, config.maxInterval);
+      intervalMinutes = this.getRandomInt(
+        config.minInterval,
+        config.maxInterval,
+      );
 
       // Generate random jitter within configured range
       jitterSeconds = this.getRandomInt(0, config.maxJitter);
@@ -140,7 +143,7 @@ class CurrencyScheduler {
       // Pattern like '0 1,6,11,16,21,26,31,36,41,46,51,56 * * * *'
       // Count the intervals between numbers
       if (minutePart.includes(',')) {
-        const minutes = minutePart.split(',').map(m => parseInt(m));
+        const minutes = minutePart.split(',').map((m) => parseInt(m));
         if (minutes.length > 1) {
           // Calculate interval from first two values
           return minutes[1] - minutes[0];
@@ -172,7 +175,9 @@ class CurrencyScheduler {
     }
 
     // Default to 5 minutes if we can't parse
-    logger.warn(`Could not parse interval from pattern: ${pattern}, defaulting to 5 minutes`);
+    logger.warn(
+      `Could not parse interval from pattern: ${pattern}, defaulting to 5 minutes`,
+    );
     return 5;
   }
 
@@ -227,7 +232,9 @@ class CurrencyScheduler {
       }
 
       if (dueTasks.length === 0) {
-        logger.debug(`Scheduler check at ${now.toISOString()} - no tasks due yet`);
+        logger.debug(
+          `Scheduler check at ${now.toISOString()} - no tasks due yet`,
+        );
         return;
       }
 
@@ -248,7 +255,9 @@ class CurrencyScheduler {
           await this.delay(500);
         }
 
-        logger.debug(`Processing ${sourceTasks.length} tasks for ${sourceName}`);
+        logger.debug(
+          `Processing ${sourceTasks.length} tasks for ${sourceName}`,
+        );
 
         // Process tasks for this source in batches
         await this.executeBatch(sourceName, sourceTasks, now);
@@ -277,7 +286,7 @@ class CurrencyScheduler {
     const secondsSinceLastRun = (now.getTime() - task.lastRun.getTime()) / 1000;
 
     // Target interval includes the jitter offset
-    const targetSeconds = (task.intervalMinutes * 60) + task.jitterSeconds;
+    const targetSeconds = task.intervalMinutes * 60 + task.jitterSeconds;
 
     return secondsSinceLastRun >= targetSeconds;
   }
@@ -285,7 +294,9 @@ class CurrencyScheduler {
   /**
    * Group tasks by source
    */
-  private groupTasksBySource(tasks: ScheduledTask[]): Record<string, ScheduledTask[]> {
+  private groupTasksBySource(
+    tasks: ScheduledTask[],
+  ): Record<string, ScheduledTask[]> {
     const groups: Record<string, ScheduledTask[]> = {};
 
     for (const task of tasks) {
@@ -308,7 +319,7 @@ class CurrencyScheduler {
   private async executeBatch(
     sourceName: string,
     tasks: ScheduledTask[],
-    executionTime: Date
+    executionTime: Date,
   ) {
     const batchSize = 10; // Process 10 currencies at a time (increased from 5)
     const staggerDelayMs = 100; // 100ms stagger between parallel requests
@@ -332,19 +343,26 @@ class CurrencyScheduler {
             // Update last run time after successful execution
             task.lastRun = executionTime;
 
-            logger.debug(`Successfully fetched ${task.fiat} from ${sourceName}`);
+            logger.debug(
+              `Successfully fetched ${task.fiat} from ${sourceName}`,
+            );
           } catch (error) {
-            logger.error(`Error fetching ${task.fiat} from ${sourceName}:`, error);
+            logger.error(
+              `Error fetching ${task.fiat} from ${sourceName}:`,
+              error,
+            );
             // Still update lastRun to avoid retry storms
             task.lastRun = executionTime;
           }
-        })
+        }),
       );
 
       // Delay between batches to respect rate limits
       if (i + batchSize < tasks.length) {
         await this.delay(500); // Reduced from 1000ms since we're already staggering
-        logger.debug(`Completed batch ${Math.floor(i / batchSize) + 1} for ${sourceName}`);
+        logger.debug(
+          `Completed batch ${Math.floor(i / batchSize) + 1} for ${sourceName}`,
+        );
       }
     }
   }
@@ -375,8 +393,7 @@ class CurrencyScheduler {
     const stats = {
       totalTasks: this.tasks.length,
       tasksByInterval: this.getTaskDistribution(),
-      nextDueTasks: this.tasks
-        .filter(task => this.isTaskDue(task, now))
+      nextDueTasks: this.tasks.filter((task) => this.isTaskDue(task, now))
         .length,
     };
     return stats;
@@ -435,7 +452,7 @@ export class NGN extends Currency {
   constructor() {
     super('NGN', [
       { source: new Quidax(), pattern: '0 */10 * * * *' }, // Every 10 minutes to reduce load
-      { source: new FawazExchangeApi() },
+      // { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -598,9 +615,7 @@ export class INR extends Currency {
  */
 export class THB extends Currency {
   constructor() {
-    super('THB', [
-      { source: new FawazExchangeApi() },
-    ]);
+    super('THB', [{ source: new FawazExchangeApi() }]);
   }
 }
 
@@ -653,9 +668,7 @@ export class PHP extends Currency {
  */
 export class SGD extends Currency {
   constructor() {
-    super('SGD', [
-      { source: new FawazExchangeApi() },
-    ]);
+    super('SGD', [{ source: new FawazExchangeApi() }]);
   }
 }
 
@@ -1078,9 +1091,7 @@ export class AZN extends Currency {
  */
 export class BAM extends Currency {
   constructor() {
-    super('BAM', [
-      { source: new FawazExchangeApi() },
-    ]);
+    super('BAM', [{ source: new FawazExchangeApi() }]);
   }
 }
 
@@ -1145,9 +1156,7 @@ export class BOB extends Currency {
  */
 export class BSD extends Currency {
   constructor() {
-    super('BSD', [
-      { source: new FawazExchangeApi() },
-    ]);
+    super('BSD', [{ source: new FawazExchangeApi() }]);
   }
 }
 
@@ -1178,9 +1187,7 @@ export class BWP extends Currency {
  */
 export class BZD extends Currency {
   constructor() {
-    super('BZD', [
-      { source: new FawazExchangeApi() },
-    ]);
+    super('BZD', [{ source: new FawazExchangeApi() }]);
   }
 }
 
@@ -1415,9 +1422,7 @@ export class HTG extends Currency {
  */
 export class ISK extends Currency {
   constructor() {
-    super('ISK', [
-      { source: new FawazExchangeApi() },
-    ]);
+    super('ISK', [{ source: new FawazExchangeApi() }]);
   }
 }
 
@@ -1431,9 +1436,7 @@ export class ISK extends Currency {
  */
 export class JMD extends Currency {
   constructor() {
-    super('JMD', [
-      { source: new FawazExchangeApi() },
-    ]);
+    super('JMD', [{ source: new FawazExchangeApi() }]);
   }
 }
 
@@ -1515,9 +1518,7 @@ export class KWD extends Currency {
  */
 export class KYD extends Currency {
   constructor() {
-    super('KYD', [
-      { source: new FawazExchangeApi() },
-    ]);
+    super('KYD', [{ source: new FawazExchangeApi() }]);
   }
 }
 
@@ -1803,9 +1804,7 @@ export class TMT extends Currency {
  */
 export class TTD extends Currency {
   constructor() {
-    super('TTD', [
-      { source: new FawazExchangeApi() },
-    ]);
+    super('TTD', [{ source: new FawazExchangeApi() }]);
   }
 }
 
@@ -1848,9 +1847,7 @@ export class XAF extends Currency {
  */
 export class MWK extends Currency {
   constructor() {
-    super('MWK', [
-      { source: new FawazExchangeApi() },
-    ]);
+    super('MWK', [{ source: new FawazExchangeApi() }]);
   }
 }
 
@@ -1881,7 +1878,11 @@ export class AED extends Currency {
 /**
  * Represents the Brazilian Real (BRL) currency.
  */
-export class BRL extends Currency { constructor() { super('BRL', [{ source: new FawazExchangeApi() }]); } }
+export class BRL extends Currency {
+  constructor() {
+    super('BRL', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Chinese Yuan Renminbi (CNY) currency.
@@ -1898,12 +1899,20 @@ export class CNY extends Currency {
 /**
  * Represents the South Korean Won (KRW) currency.
  */
-export class KRW extends Currency { constructor() { super('KRW', [{ source: new FawazExchangeApi() }]); } }
+export class KRW extends Currency {
+  constructor() {
+    super('KRW', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Russian Ruble (RUB) currency.
  */
-export class RUB extends Currency { constructor() { super('RUB', [{ source: new FawazExchangeApi() }]); } }
+export class RUB extends Currency {
+  constructor() {
+    super('RUB', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Ukrainian Hryvnia (UAH) currency.
@@ -1936,7 +1945,8 @@ export class AOA extends Currency {
   constructor() {
     super('AOA', [
       { source: new FawazExchangeApi() },
-      { source: new Binance() },]);
+      { source: new Binance() },
+    ]);
   }
 }
 
@@ -1947,7 +1957,7 @@ export class GNF extends Currency {
   constructor() {
     super('GNF', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -1955,7 +1965,11 @@ export class GNF extends Currency {
 /**
  * Represents the Lesotho Loti (LSL) currency.
  */
-export class LSL extends Currency { constructor() { super('LSL', [{ source: new FawazExchangeApi() }]); } }
+export class LSL extends Currency {
+  constructor() {
+    super('LSL', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Mozambican Metical (MZN) currency.
@@ -1964,7 +1978,7 @@ export class MZN extends Currency {
   constructor() {
     super('MZN', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -1976,7 +1990,7 @@ export class RWF extends Currency {
   constructor() {
     super('RWF', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -1988,7 +2002,7 @@ export class SDG extends Currency {
   constructor() {
     super('SDG', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -1996,12 +2010,20 @@ export class SDG extends Currency {
 /**
  * Represents the Eswatini Lilangeni (SZL) currency.
  */
-export class SZL extends Currency { constructor() { super('SZL', [{ source: new FawazExchangeApi() }]); } }
+export class SZL extends Currency {
+  constructor() {
+    super('SZL', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the São Tomé and Príncipe Dobra (STN) currency.
  */
-export class STN extends Currency { constructor() { super('STN', [{ source: new FawazExchangeApi() }]); } }
+export class STN extends Currency {
+  constructor() {
+    super('STN', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Zambian Kwacha (ZMW) currency.
@@ -2010,7 +2032,7 @@ export class ZMW extends Currency {
   constructor() {
     super('ZMW', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -2018,7 +2040,11 @@ export class ZMW extends Currency {
 /**
  * Represents the Zimbabwean Dollar (ZWL) currency.
  */
-export class ZWL extends Currency { constructor() { super('ZWL', [{ source: new FawazExchangeApi() }]); } }
+export class ZWL extends Currency {
+  constructor() {
+    super('ZWL', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Iraqi Dinar (IQD) currency.
@@ -2027,7 +2053,7 @@ export class IQD extends Currency {
   constructor() {
     super('IQD', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -2035,7 +2061,11 @@ export class IQD extends Currency {
 /**
  * Represents the Iranian Rial (IRR) currency.
  */
-export class IRR extends Currency { constructor() { super('IRR', [{ source: new FawazExchangeApi() }]); } }
+export class IRR extends Currency {
+  constructor() {
+    super('IRR', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Syrian Pound (SYP) currency.
@@ -2044,7 +2074,7 @@ export class SYP extends Currency {
   constructor() {
     super('SYP', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -2056,7 +2086,7 @@ export class TND extends Currency {
   constructor() {
     super('TND', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -2068,7 +2098,7 @@ export class YER extends Currency {
   constructor() {
     super('YER', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -2080,7 +2110,7 @@ export class LKR extends Currency {
   constructor() {
     super('LKR', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -2088,7 +2118,11 @@ export class LKR extends Currency {
 /**
  * Represents the Myanmar Kyat (MMK) currency.
  */
-export class MMK extends Currency { constructor() { super('MMK', [{ source: new FawazExchangeApi() }]); } }
+export class MMK extends Currency {
+  constructor() {
+    super('MMK', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Mongolian Tögrög (MNT) currency.
@@ -2097,7 +2131,7 @@ export class MNT extends Currency {
   constructor() {
     super('MNT', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -2109,7 +2143,7 @@ export class NPR extends Currency {
   constructor() {
     super('NPR', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -2121,7 +2155,7 @@ export class TJS extends Currency {
   constructor() {
     super('TJS', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -2129,62 +2163,110 @@ export class TJS extends Currency {
 /**
  * Represents the Uzbekistani Som (UZS) currency.
  */
-export class UZS extends Currency { constructor() { super('UZS', [{ source: new FawazExchangeApi() }]); } }
+export class UZS extends Currency {
+  constructor() {
+    super('UZS', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Surinamese Dollar (SRD) currency.
  */
-export class SRD extends Currency { constructor() { super('SRD', [{ source: new FawazExchangeApi() }]); } }
+export class SRD extends Currency {
+  constructor() {
+    super('SRD', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Salvadoran Colón (SVC) currency.
  */
-export class SVC extends Currency { constructor() { super('SVC', [{ source: new FawazExchangeApi() }]); } }
+export class SVC extends Currency {
+  constructor() {
+    super('SVC', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Fijian Dollar (FJD) currency.
  */
-export class FJD extends Currency { constructor() { super('FJD', [{ source: new FawazExchangeApi() }]); } }
+export class FJD extends Currency {
+  constructor() {
+    super('FJD', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Solomon Islands Dollar (SBD) currency.
  */
-export class SBD extends Currency { constructor() { super('SBD', [{ source: new FawazExchangeApi() }]); } }
+export class SBD extends Currency {
+  constructor() {
+    super('SBD', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Tongan Paʻanga (TOP) currency.
  */
-export class TOP extends Currency { constructor() { super('TOP', [{ source: new FawazExchangeApi() }]); } }
+export class TOP extends Currency {
+  constructor() {
+    super('TOP', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Vanuatu Vatu (VUV) currency.
  */
-export class VUV extends Currency { constructor() { super('VUV', [{ source: new FawazExchangeApi() }]); } }
+export class VUV extends Currency {
+  constructor() {
+    super('VUV', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Samoan Tala (WST) currency.
  */
-export class WST extends Currency { constructor() { super('WST', [{ source: new FawazExchangeApi() }]); } }
+export class WST extends Currency {
+  constructor() {
+    super('WST', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Macedonian Denar (MKD) currency.
  */
-export class MKD extends Currency { constructor() { super('MKD', [{ source: new FawazExchangeApi() }]); } }
+export class MKD extends Currency {
+  constructor() {
+    super('MKD', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Netherlands Antillean Guilder (ANG) currency.
  */
-export class ANG extends Currency { constructor() { super('ANG', [{ source: new FawazExchangeApi() }]); } }
+export class ANG extends Currency {
+  constructor() {
+    super('ANG', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Aruban Florin (AWG) currency.
  */
-export class AWG extends Currency { constructor() { super('AWG', [{ source: new FawazExchangeApi() }]); } }
+export class AWG extends Currency {
+  constructor() {
+    super('AWG', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Barbadian Dollar (BBD) currency.
  */
-export class BBD extends Currency { constructor() { super('BBD', [{ source: new FawazExchangeApi() }]); } }
+export class BBD extends Currency {
+  constructor() {
+    super('BBD', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Burundian Franc (BIF) currency.
@@ -2193,7 +2275,7 @@ export class BIF extends Currency {
   constructor() {
     super('BIF', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -2201,7 +2283,11 @@ export class BIF extends Currency {
 /**
  * Represents the Bermudian Dollar (BMD) currency.
  */
-export class BMD extends Currency { constructor() { super('BMD', [{ source: new FawazExchangeApi() }]); } }
+export class BMD extends Currency {
+  constructor() {
+    super('BMD', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Brunei Dollar (BND) currency.
@@ -2210,42 +2296,71 @@ export class BND extends Currency {
   constructor() {
     super('BND', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }]);
+      { source: new FawazExchangeApi() },
+    ]);
   }
 }
 
 /**
  * Represents the Cuban Peso (CUP) currency.
  */
-export class CUP extends Currency { constructor() { super('CUP', [{ source: new FawazExchangeApi() }]); } }
+export class CUP extends Currency {
+  constructor() {
+    super('CUP', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Cape Verdean Escudo (CVE) currency.
  */
-export class CVE extends Currency { constructor() { super('CVE', [{ source: new FawazExchangeApi() }]); } }
+export class CVE extends Currency {
+  constructor() {
+    super('CVE', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Djiboutian Franc (DJF) currency.
  */
-export class DJF extends Currency { constructor() { super('DJF', [{ source: new FawazExchangeApi() }]); } }
+export class DJF extends Currency {
+  constructor() {
+    super('DJF', [{ source: new FawazExchangeApi() }]);
+  }
+}
 /**
  * Represents the Falkland Islands Pound (FKP) currency.
  */
-export class FKP extends Currency { constructor() { super('FKP', [{ source: new FawazExchangeApi() }]); } }
+export class FKP extends Currency {
+  constructor() {
+    super('FKP', [{ source: new FawazExchangeApi() }]);
+  }
+}
 /**
  * Represents the Gibraltar Pound (GIP) currency.
  */
-export class GIP extends Currency { constructor() { super('GIP', [{ source: new FawazExchangeApi() }]); } }
+export class GIP extends Currency {
+  constructor() {
+    super('GIP', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Comorian Franc (KMF) currency.
  */
-export class KMF extends Currency { constructor() { super('KMF', [{ source: new FawazExchangeApi() }]); } }
+export class KMF extends Currency {
+  constructor() {
+    super('KMF', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the North Korean Won (KPW) currency.
  */
-export class KPW extends Currency { constructor() { super('KPW', [{ source: new FawazExchangeApi() }]); } }
+export class KPW extends Currency {
+  constructor() {
+    super('KPW', [{ source: new FawazExchangeApi() }]);
+  }
+}
 
 /**
  * Represents the Macanese Pataca (MOP) currency.
@@ -2254,7 +2369,7 @@ export class MOP extends Currency {
   constructor() {
     super('MOP', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -2266,7 +2381,7 @@ export class MRU extends Currency {
   constructor() {
     super('MRU', [
       { source: new Binance() },
-      { source: new FawazExchangeApi() }
+      { source: new FawazExchangeApi() },
     ]);
   }
 }
@@ -2274,4 +2389,8 @@ export class MRU extends Currency {
 /**
  * Represents the Saint Helena Pound (SHP) currency.
  */
-export class SHP extends Currency { constructor() { super('SHP', [{ source: new FawazExchangeApi() }]); } }
+export class SHP extends Currency {
+  constructor() {
+    super('SHP', [{ source: new FawazExchangeApi() }]);
+  }
+}
