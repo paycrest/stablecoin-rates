@@ -1,5 +1,11 @@
 import { Cron } from 'croner';
-import { Binance, FawazExchangeApi, Quidax, type Source } from './sources';
+import {
+  Binance,
+  FawazExchangeApi,
+  Monierate,
+  Quidax,
+  type Source,
+} from './sources';
 import { logger } from 'src/common';
 
 type Sources = {
@@ -403,10 +409,19 @@ class CurrencyScheduler {
 export class Currency {
   private _fiat: string;
   private _sources: Sources;
+  private static configuredSources: Record<string, string[]> = {};
 
   constructor(fiat: string, sources: Sources) {
     this._fiat = fiat;
     this._sources = sources;
+
+    // Track configured sources for this fiat
+    const fiatUpper = fiat.toUpperCase();
+    Currency.configuredSources[fiatUpper] = sources.map(({ source }) => {
+      // Get sourceName from the source instance's constructor
+      return (source.constructor as typeof Source & { sourceName: string })
+        .sourceName;
+    });
 
     // Register each source with the centralized scheduler
     const scheduler = CurrencyScheduler.getInstance();
@@ -438,6 +453,15 @@ export class Currency {
     const scheduler = CurrencyScheduler.getInstance();
     return scheduler.getStats();
   }
+
+  /**
+   * Get configured sources for a given fiat currency
+   * @param fiat - The fiat currency code (e.g., 'NGN')
+   * @returns Array of configured source names for the fiat, or empty array if not found
+   */
+  static getConfiguredSources(fiat: string): string[] {
+    return Currency.configuredSources[fiat.toUpperCase()] || [];
+  }
 }
 
 /**
@@ -452,6 +476,7 @@ export class NGN extends Currency {
   constructor() {
     super('NGN', [
       { source: new Quidax(), pattern: '0 */10 * * * *' }, // Every 10 minutes to reduce load
+      { source: new Monierate(), pattern: '0 */15 * * * *' }, // Every 15 minutes - market consensus
       // { source: new FawazExchangeApi() },
     ]);
   }

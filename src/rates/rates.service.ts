@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Op } from 'sequelize';
 import { Rate } from '../../src/database/models';
+import { Currency } from './currencies';
 
 /**
  * Service for handling operations related to rate data.
@@ -64,31 +65,63 @@ export class RatesService {
       {} as { [key: string]: Rate[] },
     );
 
-    return Object.values(grouped).map((items) => {
-      if (items.length === 1) {
-        const item = items[0];
+    return Object.values(grouped)
+      .map((items) => {
+        const fiat = items[0].fiat;
+        const configuredSources = Currency.getConfiguredSources(fiat);
 
-        return {
-          stablecoin: item.stablecoin,
-          fiat: item.fiat,
-          sources: [item.source],
-          buyRate: Number.parseFloat(item.buyRate.toFixed(2)),
-          sellRate: Number.parseFloat(item.sellRate.toFixed(2)),
-          timestamp: new Date().toISOString(),
-        };
-      } else {
-        const [medianBuy, medianSell] = this.findMedianRate(items);
-        const sources = items.map((item) => item.source);
-        return {
-          stablecoin: items[0].stablecoin,
-          fiat: items[0].fiat,
-          sources,
-          buyRate: Number.parseFloat(medianBuy.toFixed(2)),
-          sellRate: Number.parseFloat(medianSell.toFixed(2)),
-          timestamp: new Date().toISOString(),
-        };
-      }
-    });
+        // Filter items to only include configured sources
+        const filteredItems =
+          configuredSources.length > 0
+            ? items.filter((item) => configuredSources.includes(item.source))
+            : items;
+
+        // If no items remain after filtering, return empty or skip
+        if (filteredItems.length === 0) {
+          return null;
+        }
+
+        // Get the most recent updatedAt timestamp from all filtered items
+        const mostRecentUpdate = filteredItems.reduce(
+          (latest, item) => {
+            const itemUpdatedAt = item.updatedAt
+              ? new Date(item.updatedAt).getTime()
+              : 0;
+            const latestTime = latest ? new Date(latest).getTime() : 0;
+            return itemUpdatedAt > latestTime ? item.updatedAt : latest;
+          },
+          null as Date | null,
+        );
+
+        const timestamp = mostRecentUpdate
+          ? new Date(mostRecentUpdate).toISOString()
+          : new Date().toISOString();
+
+        if (filteredItems.length === 1) {
+          const item = filteredItems[0];
+
+          return {
+            stablecoin: item.stablecoin,
+            fiat: item.fiat,
+            sources: [item.source],
+            buyRate: Number.parseFloat(item.buyRate.toFixed(2)),
+            sellRate: Number.parseFloat(item.sellRate.toFixed(2)),
+            timestamp,
+          };
+        } else {
+          const [medianBuy, medianSell] = this.findMedianRate(filteredItems);
+          const sources = filteredItems.map((item) => item.source);
+          return {
+            stablecoin: filteredItems[0].stablecoin,
+            fiat: filteredItems[0].fiat,
+            sources,
+            buyRate: Number.parseFloat(medianBuy.toFixed(2)),
+            sellRate: Number.parseFloat(medianSell.toFixed(2)),
+            timestamp,
+          };
+        }
+      })
+      .filter((item) => item !== null);
   }
 
   /**
