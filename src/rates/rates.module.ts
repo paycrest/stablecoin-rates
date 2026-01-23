@@ -19,7 +19,10 @@ export class RatesModule implements OnModuleInit {
     // Instantiate all currency classes (they will auto-register with the scheduler)
     // Filter out the base Currency class and any non-currency exports
     const currencyClasses = Object.values(currencies).filter(
-      (cls) => typeof cls === 'function' && cls !== Currency && cls.prototype instanceof Currency
+      (cls) =>
+        typeof cls === 'function' &&
+        cls !== Currency &&
+        cls.prototype instanceof Currency,
     );
 
     let successCount = 0;
@@ -36,7 +39,9 @@ export class RatesModule implements OnModuleInit {
       }
     });
 
-    logger.log(`Initialized ${successCount} currencies (${failureCount} failed)`);
+    logger.log(
+      `Initialized ${successCount} currencies (${failureCount} failed)`,
+    );
 
     // Start the centralized scheduler
     Currency.startScheduler();
