@@ -17,6 +17,29 @@ export class DatabaseProvider {
     sqlite: sqlite3,
   };
 
+  /** Query params that control TLS via URL; remove when using explicit `dialectOptions.ssl` to avoid conflicting with `pg`. */
+  private static readonly PG_SSL_QUERY_PARAMS = [
+    'sslmode',
+    'sslrootcert',
+    'sslcert',
+    'sslkey',
+    'sslcrl',
+  ] as const;
+
+  private static stripPgSslParamsFromConnectionString(
+    connectionString: string,
+  ): string {
+    try {
+      const url = new URL(connectionString);
+      for (const p of DatabaseProvider.PG_SSL_QUERY_PARAMS) {
+        url.searchParams.delete(p);
+      }
+      return url.toString();
+    } catch {
+      return connectionString;
+    }
+  }
+
   /** Prefer base64 on platforms where multiline PEM env vars are awkward. */
   private static databaseSslCaPem(): string | undefined {
     const b64 = config.DATABASE_SSL_CA_B64?.trim();
@@ -34,13 +57,22 @@ export class DatabaseProvider {
   public static db = async () => {
     const dialectModule = this.availableDialects[config.DATABASE_DIALECT];
     const ca = this.databaseSslCaPem();
-    const ssl = config.ENABLE_DATABASE_SSL
+    const useExplicitSsl =
+      config.ENABLE_DATABASE_SSL ||
+      (config.DATABASE_DIALECT === 'postgres' && !!ca);
+
+    const ssl = useExplicitSsl
       ? {
           require: true,
           rejectUnauthorized: true,
           ...(ca ? { ca } : {}),
         }
       : undefined;
+
+    let databaseUrl = config.DATABASE_URL;
+    if (config.DATABASE_DIALECT === 'postgres' && ssl) {
+      databaseUrl = this.stripPgSslParamsFromConnectionString(databaseUrl);
+    }
 
     const sequelizeOptions: SequelizeOptions = {
       dialect: config.DATABASE_DIALECT,
@@ -52,7 +84,7 @@ export class DatabaseProvider {
       dialectModule,
     };
 
-    return new Sequelize(config.DATABASE_URL, sequelizeOptions);
+    return new Sequelize(databaseUrl, sequelizeOptions);
   };
 
   public static async useFactory(): Promise<Sequelize> {
