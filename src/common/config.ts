@@ -27,20 +27,13 @@ class Config {
   @IsNotEmpty()
   DATABASE_URL: string;
 
-  /** PEM text for Postgres TLS (e.g. managed DB CA). Use DATABASE_SSL_CA_B64 on hosts that dislike multiline secrets. */
+  /** PEM text for Postgres TLS (e.g. managed DB CA). */
   @Transform(({ value }) =>
     typeof value === 'string' && value.trim() === '' ? undefined : value,
   )
   @IsOptional()
   @IsString()
   DATABASE_SSL_CA?: string;
-
-  @Transform(({ value }) =>
-    typeof value === 'string' && value.trim() === '' ? undefined : value,
-  )
-  @IsOptional()
-  @IsString()
-  DATABASE_SSL_CA_B64?: string;
 }
 
 export let config: Config;

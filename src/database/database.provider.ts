@@ -40,16 +40,7 @@ export class DatabaseProvider {
     }
   }
 
-  /** Prefer base64 on platforms where multiline PEM env vars are awkward. */
   private static databaseSslCaPem(): string | undefined {
-    const b64 = config.DATABASE_SSL_CA_B64?.trim();
-    if (b64) {
-      try {
-        return Buffer.from(b64, 'base64').toString('utf8').trim();
-      } catch {
-        return undefined;
-      }
-    }
     const pem = config.DATABASE_SSL_CA?.trim();
     return pem || undefined;
   }
