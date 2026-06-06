@@ -7,8 +7,11 @@ import type { ServiceResponse } from '../../common/interfaces';
 
 /**
  * Represents the Monierate data source.
- * Monierate is an aggregator that collects rates from multiple providers.
- * This source returns the market consensus (median) rate from all providers on Monierate.
+ * Monierate is an aggregator that lists exchange rates from multiple providers.
+ * This source returns the best competitive rate: it anchors on the most
+ * favourable rate that has market support (the lowest buy / highest sell that
+ * at least a couple of providers agree on) and averages that cluster, ignoring
+ * lone outliers that sit far from the rest of the market.
  */
 export class Monierate extends Source<'monierate'> {
   /**
@@ -22,68 +25,63 @@ export class Monierate extends Source<'monierate'> {
   static stablecoins: Stablecoin[] = ['USDT', 'USDC'];
 
   /**
-   * Calculate median of an array
+   * Calculate the average of an array, rounded to 2 decimal places.
    */
-  private median(values: number[]): number {
-    const sorted = [...values].sort((a, b) => a - b);
-    const mid = Math.floor(sorted.length / 2);
-    return sorted.length % 2 !== 0
-      ? sorted[mid]
-      : (sorted[mid - 1] + sorted[mid]) / 2;
+  private average(values: number[]): number {
+    const sum = values.reduce((a, b) => a + b, 0);
+    return Math.round((sum / values.length) * 100) / 100;
   }
 
   /**
-   * Find consensus rate (most common rate range)
-   * Groups rates into buckets and finds the bucket with most providers
+   * Compute the best competitive rate for one side of the book.
+   *
+   * The "best" rate is the most favourable to the user — the lowest for `buy`
+   * (cheapest to acquire) and the highest for `sell` (most received). To avoid
+   * a single rogue provider hijacking the result, we only anchor on a value
+   * that has support: at least `minSupport` providers within `tolerance` of it.
+   * If the most favourable value is a lone outlier we step inward to the next
+   * one until a supported anchor is found, then average that cluster.
+   *
+   * An optional `floor` restricts the candidates to rates strictly above it.
+   * This is used to keep the buy rate above the sell rate (a normal spread):
+   * any buy quote at or below the chosen sell is ignored.
+   *
+   * @param rates - The list of provider rates for this side.
+   * @param side - 'buy' (lower is better) or 'sell' (higher is better).
+   * @param options.tolerance - Window width, in fiat units, around the anchor.
+   * @param options.minSupport - Minimum providers required within the window.
+   * @param options.floor - Exclusive lower bound; rates <= floor are dropped.
    */
-  private findConsensus(
+  private bestRate(
     rates: number[],
-    bucketSize = 5,
-  ): {
-    median: number;
-    count: number;
-    range: { min: number; max: number };
-  } {
-    const buckets: Record<number, number> = {};
-    rates.forEach((rate) => {
-      const bucket = Math.floor(rate / bucketSize) * bucketSize;
-      buckets[bucket] = (buckets[bucket] || 0) + 1;
-    });
-    const maxBucket = Object.keys(buckets).reduce((a, b) =>
-      buckets[parseInt(a)] > buckets[parseInt(b)] ? a : b,
-    );
-    const bucketStart = parseInt(maxBucket);
-    const bucketEnd = bucketStart + bucketSize;
-    const providersInBucket = rates.filter(
-      (r) => r >= bucketStart && r < bucketEnd,
-    );
-    return {
-      range: { min: bucketStart, max: bucketEnd },
-      count: buckets[parseInt(maxBucket)],
-      median: this.median(providersInBucket),
-    };
-  }
+    side: 'buy' | 'sell',
+    {
+      tolerance = 5,
+      minSupport = 2,
+      floor,
+    }: { tolerance?: number; minSupport?: number; floor?: number } = {},
+  ): number {
+    // Restrict to rates above the floor (e.g. buy must exceed sell); if nothing
+    // qualifies, fall back to the full set so we still return a rate.
+    let pool = floor === undefined ? rates : rates.filter((r) => r > floor);
+    if (pool.length === 0) pool = rates;
 
-  /**
-   * Analyze provider rates to get market consensus
-   */
-  private analyzeRates(
-    providers: Array<{ buyRate: number; sellRate: number }>,
-  ): {
-    buy: { consensus: { median: number } };
-    sell: { consensus: { median: number } };
-  } {
-    const buyRates = providers.map((p) => p.buyRate);
-    const sellRates = providers.map((p) => p.sellRate);
+    // Order best-first: ascending for buy (lowest), descending for sell (highest).
+    const ordered = [...pool].sort((a, b) => (side === 'buy' ? a - b : b - a));
 
-    return {
-      buy: {
-        consensus: this.findConsensus(buyRates),
-      },
-      sell: {
-        consensus: this.findConsensus(sellRates),
-      },
-    };
+    for (const anchor of ordered) {
+      const cluster =
+        side === 'buy'
+          ? pool.filter((r) => r >= anchor && r <= anchor + tolerance)
+          : pool.filter((r) => r <= anchor && r >= anchor - tolerance);
+
+      if (cluster.length >= minSupport) {
+        return this.average(cluster);
+      }
+    }
+
+    // No supported cluster (e.g. very few providers) — fall back to the best value.
+    return ordered[0];
   }
 
   /**
@@ -95,7 +93,7 @@ export class Monierate extends Source<'monierate'> {
   ): Promise<Array<{ buyRate: number; sellRate: number }>> {
     try {
       const response = await axios.get(
-        `https://monierate.com/?currency=${stablecoin.toUpperCase()}`,
+        `https://monierate.com/?base=${stablecoin.toUpperCase()}`,
         {
           headers: {
             'User-Agent':
@@ -143,7 +141,7 @@ export class Monierate extends Source<'monierate'> {
 
   /**
    * Fetches data from Monierate for the specified fiat currency.
-   * Returns the market consensus (median) rate from all providers on Monierate.
+   * Returns the best competitive buy/sell rate across all providers on Monierate.
    *
    * @param fiat - The fiat currency to fetch data for.
    * @returns A promise that resolves to a ServiceResponse indicating success or failure.
@@ -157,21 +155,27 @@ export class Monierate extends Source<'monierate'> {
             // Scrape Monierate for all providers
             const providers = await this.scrapeMonierate(fiat, stablecoin);
 
-            // Analyze to get market consensus
-            const analysis = this.analyzeRates(providers);
-
-            const buyRate = analysis.buy.consensus.median;
-            const sellRate = analysis.sell.consensus.median;
+            // Take the best competitive rate on each side of the book.
+            // Sell is computed first so buy can be floored above it (buy > sell).
+            const sellRate = this.bestRate(
+              providers.map((p) => p.sellRate),
+              'sell',
+            );
+            const buyRate = this.bestRate(
+              providers.map((p) => p.buyRate),
+              'buy',
+              { floor: sellRate },
+            );
 
             if (isNaN(buyRate) || isNaN(sellRate)) {
               logger.warn(
-                `Invalid consensus rates for ${stablecoin}/${fiat} on Monierate`,
+                `Invalid rates for ${stablecoin}/${fiat} on Monierate`,
               );
               return null;
             }
 
             logger.debug(
-              `Monierate consensus for ${stablecoin}/${fiat}: Buy: ${buyRate}, Sell: ${sellRate} (from ${providers.length} providers)`,
+              `Monierate best rate for ${stablecoin}/${fiat}: Buy: ${buyRate}, Sell: ${sellRate} (from ${providers.length} providers)`,
             );
 
             return {
