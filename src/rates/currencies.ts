@@ -475,9 +475,7 @@ export class Currency {
 export class NGN extends Currency {
   constructor() {
     super('NGN', [
-      { source: new Quidax(), pattern: '0 */10 * * * *' }, // Every 10 minutes to reduce load
-      { source: new Monierate(), pattern: '0 5,15,25,35,45,55 * * * *' }, // Every 10 minutes offset by 5 minutes
-      // { source: new FawazExchangeApi() },
+      { source: new Monierate(), pattern: '0 5,15,25,35,45,55 * * * *' },
     ]);
   }
 }
