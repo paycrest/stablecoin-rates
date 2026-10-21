@@ -18,6 +18,7 @@ interface ScheduledTask {
   source: Source<string>;
   intervalMinutes: number;
   jitterSeconds: number; // Random offset to spread out tasks
+  registeredAt: Date;
   lastRun?: Date;
 }
 
@@ -65,7 +66,7 @@ const DEFAULT_SOURCE_CONFIG: SourceConfig = {
  * Manages batched and staggered API requests for all currencies
  * Each currency/source combination maintains its own interval (3, 5, 10, 15 minutes, etc.)
  */
-class CurrencyScheduler {
+export class CurrencyScheduler {
   private static instance: CurrencyScheduler;
   private tasks: ScheduledTask[] = [];
   private cronJob: any;
@@ -114,6 +115,7 @@ class CurrencyScheduler {
       source,
       intervalMinutes,
       jitterSeconds,
+      registeredAt: new Date(),
       lastRun: undefined,
     });
   }
@@ -283,9 +285,13 @@ class CurrencyScheduler {
    */
   private isTaskDue(task: ScheduledTask, now: Date): boolean {
     if (!task.lastRun) {
-      // First run - check if enough seconds have passed in the current minute
-      // This spreads initial runs across 0-59 seconds instead of all at :00
-      return now.getSeconds() >= task.jitterSeconds;
+      // First run - spread startup requests by the configured jitter duration.
+      // Compare elapsed time instead of the wall-clock second so tasks with
+      // jitter above the scheduler's tick seconds are not skipped forever.
+      const secondsSinceRegistration =
+        (now.getTime() - task.registeredAt.getTime()) / 1000;
+
+      return secondsSinceRegistration >= task.jitterSeconds;
     }
 
     // Calculate total seconds since last run
