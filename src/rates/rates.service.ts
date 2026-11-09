@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import { Rate } from '../../src/database/models';
 import { Currency } from './currencies';
 import { logger } from '../common';
+import { isRateInBounds, warnOutOfBounds } from './rate-bounds';
 import { config, DEFAULT_RATE_MAX_AGE_MINUTES } from '../common/config';
 
 const STALE_LOG_INTERVAL_MS = 5 * 60 * 1000;
@@ -83,10 +84,29 @@ export class RatesService {
         const configuredSources = Currency.getConfiguredSources(fiat);
 
         // Filter items to only include configured sources
-        const filteredItems =
+        const filteredItems = (
           configuredSources.length > 0
             ? items.filter((item) => configuredSources.includes(item.source))
-            : items;
+            : items
+        ).filter((item) => {
+          if (isRateInBounds(item.fiat, item.buyRate, item.sellRate)) {
+            return true;
+          }
+          const pairKey = `${item.fiat}-${item.stablecoin}-${item.source}-bounds`;
+          const last = this.lastStaleLog.get(pairKey) ?? 0;
+          if (Date.now() - last >= STALE_LOG_INTERVAL_MS) {
+            this.lastStaleLog.set(pairKey, Date.now());
+            warnOutOfBounds(
+              'serve',
+              item.fiat,
+              item.stablecoin,
+              item.source,
+              item.buyRate,
+              item.sellRate,
+            );
+          }
+          return false;
+        });
 
         // If no items remain after filtering, return empty or skip
         if (filteredItems.length === 0) {
