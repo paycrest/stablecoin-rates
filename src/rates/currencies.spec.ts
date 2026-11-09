@@ -1,3 +1,4 @@
+import { logger } from 'src/common';
 import { CurrencyScheduler } from './currencies';
 import type { Source } from './sources';
 
@@ -84,5 +85,54 @@ describe('CurrencyScheduler', () => {
     jest.setSystemTime(new Date('2026-01-01T00:08:00.000Z'));
     await scheduler.checkAndExecuteTasks();
     expect(source.fetchData).toHaveBeenCalledTimes(2);
+  });
+
+  describe('fetch outcome logging', () => {
+    const runOnce = async (response: unknown) => {
+      const source = {
+        fetchData: jest.fn().mockResolvedValue(response),
+      };
+      CurrencyScheduler.getInstance().registerTask(
+        'NGN',
+        source as unknown as Source<string>,
+        '0 */5 * * * *',
+      );
+      jest.setSystemTime(new Date('2026-01-01T00:02:00.000Z'));
+      await scheduler.checkAndExecuteTasks();
+    };
+
+    it('logs an error, not success, when fetchData reports failure', async () => {
+      const error = jest.spyOn(logger, 'error').mockImplementation();
+      const debug = jest.spyOn(logger, 'debug').mockImplementation();
+      jest.spyOn(logger, 'log').mockImplementation();
+
+      await runOnce({
+        success: false,
+        message: 'No data fetched for NGN: USDT/NGN=failed (blocked)',
+      });
+
+      expect(error).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to fetch NGN from Object'),
+      );
+      expect(error).toHaveBeenCalledWith(
+        expect.stringContaining('USDT/NGN=failed (blocked)'),
+      );
+      expect(
+        debug.mock.calls.some((c) => String(c[0]).includes('Completed fetch')),
+      ).toBe(false);
+    });
+
+    it('logs completion with the source message when fetchData succeeds', async () => {
+      const error = jest.spyOn(logger, 'error').mockImplementation();
+      const debug = jest.spyOn(logger, 'debug').mockImplementation();
+      jest.spyOn(logger, 'log').mockImplementation();
+
+      await runOnce({ success: true, message: 'fetched 2 rates' });
+
+      expect(error).not.toHaveBeenCalled();
+      expect(debug).toHaveBeenCalledWith(
+        'Completed fetch of NGN from Object: fetched 2 rates',
+      );
+    });
   });
 });

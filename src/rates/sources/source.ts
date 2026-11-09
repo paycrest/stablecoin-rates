@@ -1,4 +1,5 @@
 import { Rate } from 'src/database/models';
+import { logger } from 'src/common';
 import type { Stablecoin } from '../dto/get-rates.dto';
 import type { ServiceResponse } from '../../common/interfaces';
 
@@ -106,29 +107,40 @@ export abstract class Source<S extends string> {
       source: S;
     }[],
   ): Promise<boolean> {
-    try {
-      const records = data.map((record) => ({
+    let allSaved = true;
+
+    for (const record of data) {
+      const normalized = {
         ...record,
         stablecoin: record.stablecoin.toUpperCase(),
-      }));
-      for (const record of records) {
-        const { fiat, stablecoin, source, buyRate, sellRate } = record;
+      };
+      const { fiat, stablecoin, source, buyRate, sellRate } = normalized;
 
-        if (buyRate || sellRate) {
-          const rateRecord = await Rate.findOne({
-            where: { fiat, stablecoin, source },
-          });
-          if (!rateRecord) {
-            await Rate.create(record);
-          } else {
-            await rateRecord.update(record);
-          }
+      if (!buyRate && !sellRate) continue;
+
+      try {
+        const rateRecord = await Rate.findOne({
+          where: { fiat, stablecoin, source },
+        });
+        if (!rateRecord) {
+          await Rate.create(normalized);
+        } else {
+          rateRecord.set(normalized);
+          // Sequelize skips the UPDATE (and so leaves updatedAt alone) when the
+          // values are unchanged. updatedAt is what the API uses to judge
+          // freshness, so a successful fetch must always refresh it.
+          rateRecord.changed('updatedAt', true);
+          await rateRecord.save();
         }
+      } catch (error) {
+        allSaved = false;
+        logger.error(
+          `Failed to save ${stablecoin}/${fiat} rate from ${source}:`,
+          error,
+        );
       }
-
-      return true;
-    } catch {
-      return false;
     }
+
+    return allSaved;
   }
 }

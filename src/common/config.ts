@@ -2,10 +2,14 @@ import { plainToInstance, Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
+  Min,
   validate,
 } from 'class-validator';
+
+export const DEFAULT_RATE_MAX_AGE_MINUTES = 30;
 
 class Config {
   @IsOptional()
@@ -23,6 +27,21 @@ class Config {
   @IsBoolean()
   @IsOptional()
   ENABLE_DATABASE_LOGGING: boolean = true;
+
+  /**
+   * Source rates not refreshed within this many minutes are excluded from the
+   * served (median) rate.
+   */
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || `${value}`.trim() === '') {
+      return DEFAULT_RATE_MAX_AGE_MINUTES;
+    }
+    return Number(value);
+  })
+  @IsNumber()
+  @Min(1)
+  @IsOptional()
+  RATE_MAX_AGE_MINUTES: number = DEFAULT_RATE_MAX_AGE_MINUTES;
 
   @IsNotEmpty()
   DATABASE_URL: string;

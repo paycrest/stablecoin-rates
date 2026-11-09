@@ -4,6 +4,132 @@ import type { Stablecoin } from '../dto/get-rates.dto';
 import { Source } from './source';
 import { logger } from 'src/common';
 import type { ServiceResponse } from '../../common/interfaces';
+import { describeHttpResponse } from './http-diagnostics';
+
+export interface MonierateProvider {
+  name?: string;
+  buyRate: number;
+  sellRate: number;
+}
+
+const NUMBER = String.raw`[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?`;
+
+/**
+ * Parses the rendered provider table. Tolerant of markup changes: it only needs
+ * each `<tr>` to contain two naira amounts (buy first, then sell), and the
+ * provider name from an `<img alt>` is optional.
+ */
+export function parseProvidersFromTable(html: string): MonierateProvider[] {
+  const providers: MonierateProvider[] = [];
+  const rows = html.match(/<tr\b[^>]*>[\s\S]*?<\/tr>/gi) ?? [];
+
+  for (const row of rows) {
+    const amounts = [
+      ...row.matchAll(/(?:₦|&#8358;|&#x20A6;|NGN\s)\s*([\d,]+(?:\.\d+)?)/gi),
+    ].map((m) => parseFloat(m[1].replace(/,/g, '')));
+
+    if (amounts.length < 2) continue;
+
+    const [buyRate, sellRate] = amounts;
+    if (!(buyRate > 0) || !(sellRate > 0)) continue;
+
+    const name = row.match(/<img[^>]*\balt="([^"]+)"/i)?.[1];
+    providers.push({ name, buyRate, sellRate });
+  }
+
+  return providers;
+}
+
+/**
+ * Parses the server-rendered Nuxt payload embedded in the page, which lists
+ * every provider as `x.changer_code="..."; x.price_buy=...; x.price_sell=...`.
+ * Used when the table cannot be parsed (e.g. different markup or currency
+ * formatting served to some clients). Providers without both prices, or that
+ * are flagged inactive, are skipped.
+ */
+export function parseProvidersFromPayload(html: string): MonierateProvider[] {
+  const providers: MonierateProvider[] = [];
+  const segments = html.split(/[\w$]+\.changer_code=/).slice(1);
+
+  for (const segment of segments) {
+    const block = segment.slice(0, segment.search(/[\w$]+\._id=/) + 1 || 4000);
+    const name = block.match(/^"([^"]+)"/)?.[1];
+    const active = block.match(/\.is_active=([^;]+);/)?.[1];
+    const buy = block.match(new RegExp(`\\.price_buy=(${NUMBER});`))?.[1];
+    const sell = block.match(new RegExp(`\\.price_sell=(${NUMBER});`))?.[1];
+
+    if (active !== undefined && !['true', '!0'].includes(active.trim())) {
+      continue;
+    }
+    if (buy === undefined || sell === undefined) continue;
+
+    const buyRate = parseFloat(buy);
+    const sellRate = parseFloat(sell);
+    if (!(buyRate > 0) || !(sellRate > 0)) continue;
+
+    providers.push({ name, buyRate, sellRate });
+  }
+
+  return providers;
+}
+
+/**
+ * Extracts provider rates from a Monierate page: the rendered table first,
+ * then the embedded payload as a fallback.
+ */
+export function parseMonierateProviders(html: string): MonierateProvider[] {
+  const fromTable = parseProvidersFromTable(html);
+  if (fromTable.length > 0) return fromTable;
+  return parseProvidersFromPayload(html);
+}
+
+/**
+ * Request header sets tried in order. The minimal set is what has been used
+ * historically; the browser-like set is tried when the first yields no data.
+ */
+const HEADER_PROFILES: Array<{
+  name: string;
+  headers: Record<string, string>;
+}> = [
+  {
+    name: 'minimal',
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    },
+  },
+  {
+    name: 'browser',
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+      Accept:
+        'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Cache-Control': 'no-cache',
+      Pragma: 'no-cache',
+      'Upgrade-Insecure-Requests': '1',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Sec-Fetch-User': '?1',
+    },
+  },
+];
+
+interface PairOutcome {
+  stablecoin: string;
+  result: {
+    fiat: string;
+    stablecoin: string;
+    buyRate: number;
+    sellRate: number;
+    source: 'monierate';
+  } | null;
+  providerCount?: number;
+  reason?: string;
+}
 
 /**
  * Represents the Monierate data source.
@@ -23,6 +149,11 @@ export class Monierate extends Source<'monierate'> {
    * Supported stablecoins for Monierate.
    */
   static stablecoins: Stablecoin[] = ['USDT', 'USDC'];
+
+  /**
+   * Index of the header profile that last produced data; tried first next time.
+   */
+  private preferredProfile = 0;
 
   /**
    * Calculate the average of an array, rounded to 2 decimal places.
@@ -85,63 +216,129 @@ export class Monierate extends Source<'monierate'> {
   }
 
   /**
-   * Scrapes Monierate website for stablecoin rates
+   * Requests the Monierate page for a stablecoin and extracts provider rates.
+   * Tries each header profile in turn (starting with the one that last worked)
+   * and, whenever a page yields no providers, logs what was actually received.
    */
   private async scrapeMonierate(
     fiat: string,
     stablecoin: string,
-  ): Promise<Array<{ buyRate: number; sellRate: number }>> {
-    try {
-      const response = await axios.get(
-        `https://monierate.com/?base=${stablecoin.toUpperCase()}`,
-        {
-          headers: {
-            'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+  ): Promise<MonierateProvider[]> {
+    const url = `https://monierate.com/?base=${stablecoin.toUpperCase()}`;
+    const failures: string[] = [];
+
+    for (let attempt = 0; attempt < HEADER_PROFILES.length; attempt++) {
+      const index = (this.preferredProfile + attempt) % HEADER_PROFILES.length;
+      const profile = HEADER_PROFILES[index];
+
+      const response = await axios.get<string>(url, {
+        headers: profile.headers,
+        timeout: 15000,
+        maxRedirects: 5,
+        responseType: 'text',
+        transformResponse: [(data) => data],
+        validateStatus: () => true,
+      });
+
+      const html = typeof response.data === 'string' ? response.data : '';
+      const providers =
+        response.status >= 200 && response.status < 300
+          ? parseMonierateProviders(html)
+          : [];
+
+      if (providers.length > 0) {
+        this.preferredProfile = index;
+        if (attempt > 0) {
+          logger.warn(
+            `Monierate ${stablecoin}/${fiat} only parsed with the "${profile.name}" header profile after: ${failures.join('; ')}`,
+          );
+        }
+        return providers;
+      }
+
+      const reason =
+        response.status >= 200 && response.status < 300
+          ? 'No providers found in HTML. HTML structure may have changed.'
+          : `Unexpected HTTP status ${response.status}`;
+
+      logger.error(
+        `Monierate scrape for ${stablecoin}/${fiat} returned no providers (header profile "${profile.name}"): ${reason} ${JSON.stringify(
+          {
+            ...describeHttpResponse(response),
+            markers: {
+              tableRows: (html.match(/<tr\b/gi) ?? []).length,
+              nairaAmounts: (html.match(/₦\s*[\d,]+/g) ?? []).length,
+              payloadProviders: (html.match(/\.changer_code=/g) ?? []).length,
+            },
           },
-          timeout: 15000,
-        },
+        )}`,
+      );
+      failures.push(`${profile.name}: ${reason}`);
+
+      if (attempt === HEADER_PROFILES.length - 1) {
+        throw new Error(`${reason} (tried ${failures.length} header profiles)`);
+      }
+    }
+
+    throw new Error('No Monierate header profiles configured');
+  }
+
+  /**
+   * Scrapes one stablecoin and reduces the providers to a single buy/sell pair.
+   */
+  private async fetchPair(
+    fiat: string,
+    stablecoin: string,
+  ): Promise<PairOutcome> {
+    try {
+      const providers = await this.scrapeMonierate(fiat, stablecoin);
+
+      // Take the best competitive rate on each side of the book.
+      // Sell is computed first so buy can be floored above it (buy > sell).
+      const sellRate = this.bestRate(
+        providers.map((p) => p.sellRate),
+        'sell',
+      );
+      const buyRate = this.bestRate(
+        providers.map((p) => p.buyRate),
+        'buy',
+        { floor: sellRate },
       );
 
-      const html = response.data;
-      const providers: Array<{ buyRate: number; sellRate: number }> = [];
-
-      // Extract table rows - pattern matches: provider name from img alt, buy rate, sell rate
-      const rowPattern =
-        /<tr[^>]*>[\s\S]*?<img[^>]*alt="([^"]+)"[^>]*>[\s\S]*?<td[^>]*>.*?₦([\d,]+)[\s\S]*?<td[^>]*>.*?₦([\d,]+)/g;
-
-      let match;
-      while ((match = rowPattern.exec(html)) !== null) {
-        const buyText = match[2];
-        const sellText = match[3];
-
-        const buyRate = buyText ? parseFloat(buyText.replace(/,/g, '')) : null;
-        const sellRate = sellText
-          ? parseFloat(sellText.replace(/,/g, ''))
-          : null;
-
-        // Only include providers with both buy and sell rates
-        if (buyRate && !isNaN(buyRate) && sellRate && !isNaN(sellRate)) {
-          providers.push({ buyRate, sellRate });
-        }
+      if (isNaN(buyRate) || isNaN(sellRate)) {
+        return {
+          stablecoin,
+          result: null,
+          providerCount: providers.length,
+          reason: 'invalid rates computed',
+        };
       }
 
-      if (providers.length === 0) {
-        throw new Error(
-          'No providers found in HTML. HTML structure may have changed.',
-        );
-      }
-
-      return providers;
+      return {
+        stablecoin,
+        providerCount: providers.length,
+        result: {
+          fiat: fiat.toUpperCase(),
+          stablecoin,
+          buyRate,
+          sellRate,
+          source: Monierate.sourceName,
+        },
+      };
     } catch (error) {
-      logger.error(`Error scraping Monierate for ${fiat}:`, error);
-      throw error;
+      return {
+        stablecoin,
+        result: null,
+        reason: error?.message ?? String(error),
+      };
     }
   }
 
   /**
    * Fetches data from Monierate for the specified fiat currency.
    * Returns the best competitive buy/sell rate across all providers on Monierate.
+   * The response (and logs) report the outcome of every stablecoin pair, and the
+   * call is only successful when at least one pair was scraped and saved.
    *
    * @param fiat - The fiat currency to fetch data for.
    * @returns A promise that resolves to a ServiceResponse indicating success or failure.
@@ -149,70 +346,55 @@ export class Monierate extends Source<'monierate'> {
   async fetchData(fiat: string): Promise<ServiceResponse> {
     try {
       // Use the request queue to prevent rate limiting
-      const result = await this.queuedRequest(async () => {
-        const promises = Monierate.stablecoins.map(async (stablecoin) => {
-          try {
-            // Scrape Monierate for all providers
-            const providers = await this.scrapeMonierate(fiat, stablecoin);
+      const outcomes = await this.queuedRequest(() =>
+        Promise.all(
+          Monierate.stablecoins.map((stablecoin) =>
+            this.fetchPair(fiat, stablecoin),
+          ),
+        ),
+      );
 
-            // Take the best competitive rate on each side of the book.
-            // Sell is computed first so buy can be floored above it (buy > sell).
-            const sellRate = this.bestRate(
-              providers.map((p) => p.sellRate),
-              'sell',
-            );
-            const buyRate = this.bestRate(
-              providers.map((p) => p.buyRate),
-              'buy',
-              { floor: sellRate },
-            );
+      const summary = outcomes
+        .map((o) =>
+          o.result
+            ? `${o.stablecoin}/${fiat}=ok (buy ${o.result.buyRate}, sell ${o.result.sellRate}, ${o.providerCount} providers)`
+            : `${o.stablecoin}/${fiat}=failed (${o.reason})`,
+        )
+        .join('; ');
 
-            if (isNaN(buyRate) || isNaN(sellRate)) {
-              logger.warn(
-                `Invalid rates for ${stablecoin}/${fiat} on Monierate`,
-              );
-              return null;
-            }
-
-            logger.debug(
-              `Monierate best rate for ${stablecoin}/${fiat}: Buy: ${buyRate}, Sell: ${sellRate} (from ${providers.length} providers)`,
-            );
-
-            return {
-              fiat: fiat.toUpperCase(),
-              stablecoin,
-              buyRate,
-              sellRate,
-              source: Monierate.sourceName,
-            };
-          } catch (error) {
-            logger.error(
-              `Error fetching ${stablecoin}/${fiat} from Monierate:`,
-              error.message,
-            );
-            return null;
-          }
-        });
-
-        return Promise.all(promises);
-      });
-
-      const validResults = result.filter(Boolean);
+      const validResults = outcomes
+        .map((o) => o.result)
+        .filter((r): r is NonNullable<typeof r> => r !== null);
 
       if (validResults.length === 0) {
+        const message = `No data fetched for ${fiat} from Monierate: ${summary}`;
         return {
           success: false,
-          message: `No data fetched for ${fiat} from Monierate`,
+          message,
           statusCode: HttpStatus.NO_CONTENT,
         };
       }
 
-      // Save to database using the parent class method
-      await this.logData(validResults);
+      const saved = await this.logData(validResults);
+      if (!saved) {
+        const message = `Fetched rates for ${fiat} from Monierate but failed to save them: ${summary}`;
+        return {
+          success: false,
+          message,
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        };
+      }
+
+      const partial = validResults.length < outcomes.length;
+      const message = partial
+        ? `Partially fetched ${validResults.length}/${outcomes.length} rates for ${fiat} from Monierate: ${summary}`
+        : `Successfully fetched ${validResults.length} rates for ${fiat} from Monierate: ${summary}`;
+      if (partial) logger.warn(message);
+      else logger.debug(message);
 
       return {
         success: true,
-        message: `Successfully fetched ${validResults.length} rates for ${fiat} from Monierate`,
+        message,
         statusCode: HttpStatus.OK,
         data: validResults,
       };

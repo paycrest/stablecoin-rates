@@ -350,14 +350,25 @@ export class CurrencyScheduler {
             }
 
             // Execute the fetch
-            await task.source.fetchData(task.fiat);
+            const result = await task.source.fetchData(task.fiat);
 
-            // Update last run time after successful execution
+            // Update last run time after the attempt to avoid retry storms
             task.lastRun = executionTime;
 
-            logger.debug(
-              `Successfully fetched ${task.fiat} from ${sourceName}`,
-            );
+            // fetchData reports failures through its return value rather than
+            // by throwing, so the outcome must be checked before claiming success.
+            const detail = Array.isArray(result?.message)
+              ? result.message.join(', ')
+              : result?.message;
+            if (result?.success === false) {
+              logger.error(
+                `Failed to fetch ${task.fiat} from ${sourceName}: ${detail}`,
+              );
+            } else {
+              logger.debug(
+                `Completed fetch of ${task.fiat} from ${sourceName}${detail ? `: ${detail}` : ''}`,
+              );
+            }
           } catch (error) {
             logger.error(
               `Error fetching ${task.fiat} from ${sourceName}:`,
@@ -481,7 +492,9 @@ export class Currency {
 export class NGN extends Currency {
   constructor() {
     super('NGN', [
-      { source: new Monierate(), pattern: '0 5,15,25,35,45,55 * * * *' },
+      { source: new Monierate(), pattern: '0 5,15,25,35,45,55 * * * *' }, // Every 10 minutes offset by 5 minutes
+      // Direct source so NGN stays fresh if the Monierate scrape is blocked or breaks
+      { source: new Quidax(), pattern: '0 */5 * * * *' },
     ]);
   }
 }
