@@ -1,5 +1,6 @@
 import { Rate } from 'src/database/models';
 import { logger } from 'src/common';
+import { isRateInBounds, warnOutOfBounds } from '../rate-bounds';
 import type { Stablecoin } from '../dto/get-rates.dto';
 import type { ServiceResponse } from '../../common/interfaces';
 
@@ -117,6 +118,12 @@ export abstract class Source<S extends string> {
       const { fiat, stablecoin, source, buyRate, sellRate } = normalized;
 
       if (!buyRate && !sellRate) continue;
+
+      if (!isRateInBounds(fiat, buyRate, sellRate)) {
+        warnOutOfBounds('save', fiat, stablecoin, source, buyRate, sellRate);
+        allSaved = false;
+        continue;
+      }
 
       try {
         const rateRecord = await Rate.findOne({

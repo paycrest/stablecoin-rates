@@ -1,11 +1,5 @@
 import { Cron } from 'croner';
-import {
-  Binance,
-  FawazExchangeApi,
-  Monierate,
-  Quidax,
-  type Source,
-} from './sources';
+import { Binance, FawazExchangeApi, Quidax, type Source } from './sources';
 import { logger } from 'src/common';
 
 type Sources = {
@@ -492,8 +486,9 @@ export class Currency {
 export class NGN extends Currency {
   constructor() {
     super('NGN', [
-      { source: new Monierate(), pattern: '0 5,15,25,35,45,55 * * * *' }, // Every 10 minutes offset by 5 minutes
-      // Direct source so NGN stays fresh if the Monierate scrape is blocked or breaks
+      // Hotfix 2026-11-09: Monierate removed. From the DO server it returned
+      // ~0.89 (a page in another currency), which halved the NGN median.
+      // USDC/NGN has no source until Monierate is fixed and is served stale.
       { source: new Quidax(), pattern: '0 */5 * * * *' },
     ]);
   }

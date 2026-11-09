@@ -167,4 +167,18 @@ describe('RatesService', () => {
       'quidax',
     ]);
   });
+
+  it('drops implausible NGN rows before computing the median', async () => {
+    const result = await serve([
+      row('monierate', 0.89, 0.88, 1),
+      row('quidax', 1385, 1379, 1),
+    ]);
+    expect(result).toEqual([
+      expect.objectContaining({
+        sources: ['quidax'],
+        buyRate: 1385,
+        sellRate: 1379,
+      }),
+    ]);
+  });
 });
