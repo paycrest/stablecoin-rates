@@ -5,6 +5,18 @@ import { Currency } from './currencies';
 import { logger } from '../common';
 import { isRateInBounds, warnOutOfBounds } from './rate-bounds';
 import { config, DEFAULT_RATE_MAX_AGE_MINUTES } from '../common/config';
+import { DERIVE_USDC_FROM_USDT_FIATS, isSourceDisabled } from './source-policy';
+import { getUsdcUsdtPeg } from './usdc-usdt-peg';
+
+type ServedRate = {
+  stablecoin: string;
+  fiat: string;
+  sources: string[];
+  buyRate: number;
+  sellRate: number;
+  timestamp: string;
+  stale?: boolean;
+};
 
 const STALE_LOG_INTERVAL_MS = 5 * 60 * 1000;
 
@@ -34,7 +46,11 @@ export class RatesService {
         fiat: { [Op.in]: fiatArray },
       },
     });
-    return this.calculateMedianRates(rates);
+    return this.withDerivedUsdc(
+      stablecoin.toUpperCase(),
+      fiatArray,
+      this.calculateMedianRates(rates),
+    );
   }
 
   /**
@@ -47,7 +63,79 @@ export class RatesService {
     const rates = await Rate.findAll({
       where: { stablecoin: stablecoin.toUpperCase() },
     });
-    return this.calculateMedianRates(rates);
+    return this.withDerivedUsdc(
+      stablecoin.toUpperCase(),
+      DERIVE_USDC_FROM_USDT_FIATS,
+      this.calculateMedianRates(rates),
+    );
+  }
+
+  /**
+   * For USDC requests, fills in fiats listed in DERIVE_USDC_FROM_USDT_FIATS
+   * that have no fresh direct USDC rate, by multiplying the fresh served
+   * USDT/<fiat> rate by the USDC/USDT peg. The derived rate must be fresh
+   * (timestamp = the older of its inputs) and inside the fiat's bounds,
+   * otherwise nothing is derived and the direct result (if any) is kept.
+   */
+  private async withDerivedUsdc(
+    stablecoin: string,
+    fiats: string[],
+    result: ServedRate[],
+    now: number = Date.now(),
+  ): Promise<ServedRate[]> {
+    if (stablecoin !== 'USDC') return result;
+
+    const targets = fiats
+      .map((fiat) => fiat.toUpperCase())
+      .filter(
+        (fiat) =>
+          DERIVE_USDC_FROM_USDT_FIATS.includes(fiat) &&
+          !result.some((r) => r.fiat === fiat && !r.stale),
+      );
+    if (targets.length === 0) return result;
+
+    const usdtRows = await Rate.findAll({
+      where: { stablecoin: 'USDT', fiat: { [Op.in]: targets } },
+    });
+    const usdt = this.calculateMedianRates(usdtRows, now).filter(
+      (r) => !r.stale,
+    );
+    if (usdt.length === 0) return result;
+
+    const peg = await getUsdcUsdtPeg();
+    if (!peg) {
+      this.logStaleOnce(
+        'usdc-usdt-peg',
+        `No in-band USDC/USDT peg available; not deriving USDC for ${targets.join(',')}`,
+      );
+      return result;
+    }
+
+    const maxAgeMs = this.getMaxAgeMs();
+    const derived: ServedRate[] = [];
+    for (const u of usdt) {
+      const buyRate = Number.parseFloat((u.buyRate * peg.rate).toFixed(2));
+      const sellRate = Number.parseFloat((u.sellRate * peg.rate).toFixed(2));
+      const source = `derived:${u.sources.join('+')}+${peg.source}`;
+      if (!isRateInBounds(u.fiat, buyRate, sellRate)) {
+        warnOutOfBounds('derive', u.fiat, 'USDC', source, buyRate, sellRate);
+        continue;
+      }
+      const tsMs = Math.min(new Date(u.timestamp).getTime(), peg.fetchedAt);
+      if (!(now - tsMs <= maxAgeMs)) continue;
+      derived.push({
+        stablecoin: 'USDC',
+        fiat: u.fiat,
+        sources: [source],
+        buyRate,
+        sellRate,
+        timestamp: new Date(tsMs).toISOString(),
+      });
+    }
+    if (derived.length === 0) return result;
+
+    const derivedFiats = new Set(derived.map((d) => d.fiat));
+    return [...result.filter((r) => !derivedFiats.has(r.fiat)), ...derived];
   }
 
   /**
@@ -66,7 +154,10 @@ export class RatesService {
    * @returns An array of objects each containing the trading pair, stablecoin, fiat, sources,
    *          median buy rate, median sell rate, and a timestamp.
    */
-  private calculateMedianRates(data: Rate[], now: number = Date.now()) {
+  private calculateMedianRates(
+    data: Rate[],
+    now: number = Date.now(),
+  ): ServedRate[] {
     const maxAgeMs = this.getMaxAgeMs();
     const grouped = data.reduce(
       (acc, item) => {
@@ -88,25 +179,27 @@ export class RatesService {
           configuredSources.length > 0
             ? items.filter((item) => configuredSources.includes(item.source))
             : items
-        ).filter((item) => {
-          if (isRateInBounds(item.fiat, item.buyRate, item.sellRate)) {
-            return true;
-          }
-          const pairKey = `${item.fiat}-${item.stablecoin}-${item.source}-bounds`;
-          const last = this.lastStaleLog.get(pairKey) ?? 0;
-          if (Date.now() - last >= STALE_LOG_INTERVAL_MS) {
-            this.lastStaleLog.set(pairKey, Date.now());
-            warnOutOfBounds(
-              'serve',
-              item.fiat,
-              item.stablecoin,
-              item.source,
-              item.buyRate,
-              item.sellRate,
-            );
-          }
-          return false;
-        });
+        )
+          .filter((item) => !isSourceDisabled(item.fiat, item.source))
+          .filter((item) => {
+            if (isRateInBounds(item.fiat, item.buyRate, item.sellRate)) {
+              return true;
+            }
+            const pairKey = `${item.fiat}-${item.stablecoin}-${item.source}-bounds`;
+            const last = this.lastStaleLog.get(pairKey) ?? 0;
+            if (Date.now() - last >= STALE_LOG_INTERVAL_MS) {
+              this.lastStaleLog.set(pairKey, Date.now());
+              warnOutOfBounds(
+                'serve',
+                item.fiat,
+                item.stablecoin,
+                item.source,
+                item.buyRate,
+                item.sellRate,
+              );
+            }
+            return false;
+          });
 
         // If no items remain after filtering, return empty or skip
         if (filteredItems.length === 0) {

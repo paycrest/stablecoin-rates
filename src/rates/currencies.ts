@@ -1,6 +1,7 @@
 import { Cron } from 'croner';
 import { Binance, FawazExchangeApi, Quidax, type Source } from './sources';
 import { logger } from 'src/common';
+import { isSourceDisabled } from './source-policy';
 
 type Sources = {
   source: Source<string>;
@@ -424,11 +425,18 @@ export class Currency {
 
   constructor(fiat: string, sources: Sources) {
     this._fiat = fiat;
-    this._sources = sources;
+    this._sources = sources.filter(({ source }) => {
+      const name = (
+        source.constructor as typeof Source & { sourceName: string }
+      ).sourceName;
+      if (!isSourceDisabled(fiat, name)) return true;
+      logger.warn(`${name} is disabled for ${fiat}; not scheduling it`);
+      return false;
+    });
 
     // Track configured sources for this fiat
     const fiatUpper = fiat.toUpperCase();
-    Currency.configuredSources[fiatUpper] = sources.map(({ source }) => {
+    Currency.configuredSources[fiatUpper] = this._sources.map(({ source }) => {
       // Get sourceName from the source instance's constructor
       return (source.constructor as typeof Source & { sourceName: string })
         .sourceName;
@@ -488,7 +496,8 @@ export class NGN extends Currency {
     super('NGN', [
       // Hotfix 2026-11-09: Monierate removed. From the DO server it returned
       // ~0.89 (a page in another currency), which halved the NGN median.
-      // USDC/NGN has no source until Monierate is fixed and is served stale.
+      // It is also blocked for NGN in source-policy.ts. USDC/NGN is derived
+      // from USDT/NGN x USDC/USDT in RatesService.
       { source: new Quidax(), pattern: '0 */5 * * * *' },
     ]);
   }
