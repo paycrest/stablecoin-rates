@@ -94,7 +94,14 @@ export class Binance extends Source<'binance'> {
       }
 
       // Save to database
-      await this.saveRates(validResults);
+      const saved = await this.logData(validResults);
+      if (!saved) {
+        return {
+          success: false,
+          message: `Fetched rates for ${fiat} from Binance but failed to save them`,
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        };
+      }
 
       return {
         success: true,
@@ -139,41 +146,5 @@ export class Binance extends Source<'binance'> {
     );
 
     return response.data?.data || [];
-  }
-
-  /**
-   * Saves the fetched rates to the database.
-   */
-  private async saveRates(rates: any[]): Promise<void> {
-    const { Rate } = await import('../../database/models');
-
-    for (const rate of rates) {
-      try {
-        // Check if rate already exists, if not create new one (let UUID auto-generate)
-        const existingRate = await Rate.findOne({
-          where: {
-            source: rate.source,
-            stablecoin: rate.stablecoin,
-            fiat: rate.fiat,
-          },
-        });
-
-        if (existingRate) {
-          // Update existing rate
-          await existingRate.update({
-            buyRate: rate.buyRate,
-            sellRate: rate.sellRate,
-          });
-        } else {
-          // Create new rate (UUID will auto-generate)
-          await Rate.create(rate);
-        }
-      } catch (error) {
-        logger.error(
-          `Failed to save rate ${rate.stablecoin}/${rate.fiat}:`,
-          error,
-        );
-      }
-    }
   }
 }
