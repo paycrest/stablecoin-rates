@@ -3,6 +3,7 @@ import axios from 'axios';
 import type { Stablecoin } from '../dto/get-rates.dto';
 import { Source } from './source';
 import { logger } from 'src/common';
+import { describeHttpResponse } from './http-diagnostics';
 import type { ServiceResponse } from '../../common/interfaces';
 
 /**
@@ -19,6 +20,31 @@ export class Quidax extends Source<'quidax'> {
    * Supported stablecoins for Quidax.
    */
   static stablecoins: Stablecoin[] = ['USDT'];
+
+  /**
+   * Converts a Quidax ticker into this service's buy/sell convention.
+   *
+   * Quidax's ticker follows exchange order-book naming: `buy` is the best bid
+   * (what a buyer offers, i.e. what a user receives when selling the
+   * stablecoin) and `sell` is the best ask (what a seller wants, i.e. what a
+   * user pays when buying the stablecoin). This service, like Monierate and
+   * Binance P2P, names rates from the user's side: `buyRate` is the fiat price
+   * paid to buy the stablecoin (higher) and `sellRate` is the fiat received when
+   * selling it (lower). The two columns are therefore swapped here.
+   *
+   * @returns The rates, or null if they are invalid or the book is crossed.
+   */
+  static toRates(ticker: {
+    buy: string;
+    sell: string;
+  }): { buyRate: number; sellRate: number } | null {
+    const bid = parseFloat(ticker?.buy);
+    const ask = parseFloat(ticker?.sell);
+
+    if (!(bid > 0) || !(ask > 0) || ask < bid) return null;
+
+    return { buyRate: ask, sellRate: bid };
+  }
 
   /**
    * Returns the Quidax API endpoint URL for a given fiat currency.
@@ -48,36 +74,38 @@ export class Quidax extends Source<'quidax'> {
               headers: {
                 'User-Agent': 'Mozilla/5.0 (compatible; StablecoinRates/1.0)',
               },
+              validateStatus: () => true,
             });
 
             if (
-              response.status === HttpStatus.OK &&
-              response.data &&
-              response.data.status === 'success'
+              response.status !== HttpStatus.OK ||
+              response.data?.status !== 'success' ||
+              !response.data?.data?.ticker
             ) {
-              const ticker = response.data.data.ticker;
-
-              // Extract buy and sell rates from Quidax response
-              const buyRate = parseFloat(ticker.buy);
-              const sellRate = parseFloat(ticker.sell);
-
-              if (isNaN(buyRate) || isNaN(sellRate)) {
-                logger.warn(
-                  `Invalid rates for ${stablecoin}/${fiat} on Quidax`,
-                );
-                return null;
-              }
-
-              return {
-                fiat,
-                stablecoin,
-                buyRate,
-                sellRate,
-                source: Quidax.sourceName,
-              };
+              logger.warn(
+                `Unexpected Quidax response for ${stablecoin}/${fiat}: ${JSON.stringify(
+                  describeHttpResponse(response),
+                )}`,
+              );
+              return null;
             }
 
-            return null;
+            const { ticker } = response.data.data;
+            const rates = Quidax.toRates(ticker);
+
+            if (!rates) {
+              logger.warn(
+                `Invalid rates for ${stablecoin}/${fiat} on Quidax: buy=${ticker.buy} sell=${ticker.sell}`,
+              );
+              return null;
+            }
+
+            return {
+              fiat,
+              stablecoin,
+              ...rates,
+              source: Quidax.sourceName,
+            };
           } catch (error) {
             logger.error(
               `Error fetching ${stablecoin}/${fiat} from Quidax:`,
@@ -101,7 +129,14 @@ export class Quidax extends Source<'quidax'> {
       }
 
       // Save to database
-      await this.saveRates(validResults);
+      const saved = await this.logData(validResults);
+      if (!saved) {
+        return {
+          success: false,
+          message: `Fetched rates for ${fiat} from Quidax but failed to save them`,
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        };
+      }
 
       return {
         success: true,
@@ -116,42 +151,6 @@ export class Quidax extends Source<'quidax'> {
         message: `Failed to fetch data for ${fiat} from Quidax: ${error.message}`,
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       };
-    }
-  }
-
-  /**
-   * Saves the fetched rates to the database.
-   */
-  private async saveRates(rates: any[]): Promise<void> {
-    const { Rate } = await import('../../database/models');
-
-    for (const rate of rates) {
-      try {
-        // Check if rate already exists, if not create new one (let UUID auto-generate)
-        const existingRate = await Rate.findOne({
-          where: {
-            source: rate.source,
-            stablecoin: rate.stablecoin,
-            fiat: rate.fiat,
-          },
-        });
-
-        if (existingRate) {
-          // Update existing rate
-          await existingRate.update({
-            buyRate: rate.buyRate,
-            sellRate: rate.sellRate,
-          });
-        } else {
-          // Create new rate (UUID will auto-generate)
-          await Rate.create(rate);
-        }
-      } catch (error) {
-        logger.error(
-          `Failed to save rate ${rate.stablecoin}/${rate.fiat}:`,
-          error,
-        );
-      }
     }
   }
 }
